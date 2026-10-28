@@ -46,3 +46,17 @@ A web page that draws the ESP32 and the three sensors and shows each detection l
 3. Open http://localhost:8000
 
 Stop it with Ctrl+C before uploading new firmware.
+
+## 3D model (Blender)
+
+`3d-model/belt_for_blind.blend` is a to-scale model of the breadboard prototype. Rebuild it with:
+```
+/Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup -P 3d-model/build_model.py -- 3d-model/belt_for_blind.blend
+```
+
+The realistic background is the CC0 [Artist Workshop](https://polyhaven.com/a/artist_workshop) HDRI from Poly Haven. It is not in git (25 MB), so download it once, or the background shows pink:
+```
+mkdir -p 3d-model/hdri && curl -L -o 3d-model/hdri/artist_workshop_4k.hdr https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/4k/artist_workshop_4k.hdr
+```
+
+To make it follow the real sensors: start the live-view server (above), open the file, go to the **Scripting** tab and click **Run Script** on `live_link.py`. Click it again to stop.

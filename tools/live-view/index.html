@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Belt Live View</title>
+<style>
+  :root {
+    --bg: #eef1f5;
+    --panel: #ffffff;
+    --ink: #151a21;
+    --muted: #5f6b7a;
+    --line: #d9dee5;
+    --beam: 37 99 235; /* rgb triplet, used with alpha */
+    --alert: #e5484d;       /* red: only used when the buzzer is on */
+    --very-close: #ea6a12;  /* orange */
+    --close: #b98900;       /* yellow */
+    --far: #1f9d55;         /* green */
+    --idle: #8b95a3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117;
+      --panel: #151b23;
+      --ink: #e6ebf1;
+      --muted: #96a1b0;
+      --line: #252d38;
+      --beam: 96 165 250;
+      --very-close: #fb8c3c;
+      --close: #facc15;
+      --far: #34c26f;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--line);
+  }
+  h1 { font-size: 18px; margin: 0; font-weight: 650; }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .pill::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--idle);
+  }
+  .pill.live::before { background: var(--far); animation: blink 1.2s ease-in-out infinite; }
+  .pill.waiting::before { background: var(--close); }
+  .pill.down::before { background: var(--alert); }
+  @keyframes blink { 50% { opacity: .35; } }
+
+  main {
+    display: grid;
+    gap: 20px;
+    padding: 20px 24px 32px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  @media (min-width: 1000px) {
+    main { grid-template-columns: minmax(0, 1fr) 320px; align-items: start; }
+  }
+  @media (max-width: 600px) {
+    header, main { padding-left: 16px; padding-right: 16px; }
+  }
+
+  .stage {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 8px;
+  }
+  #scene { display: block; width: 100%; height: auto; transition: filter .3s, opacity .3s; }
+  #scene.offline { filter: grayscale(1); opacity: .45; }
+
+  /* Accent colour follows each sensor's state; shared by the drawing and the cards */
+  .sensor, .card { --accent: var(--idle); }
+  [data-state="ok"][data-zone="too-close"] { --accent: var(--alert); }
+  [data-state="ok"][data-zone="very-close"] { --accent: var(--very-close); }
+  [data-state="ok"][data-zone="close"] { --accent: var(--close); }
+  [data-state="ok"][data-zone="far"] { --accent: var(--far); }
+  [data-state="clear"] { --accent: rgb(var(--beam)); }
+  [data-state="nosignal"] { --accent: var(--muted); }
+
+  .beam { fill: rgb(var(--beam) / .07); stroke: rgb(var(--beam) / .3); stroke-width: 1; }
+  .tick { fill: none; stroke: rgb(var(--beam) / .3); stroke-dasharray: 3 5; }
+  .tick-label { font-size: 10px; fill: var(--muted); }
+  .wave { fill: none; stroke: rgb(var(--beam) / .65); stroke-width: 2; }
+  .hit { fill: var(--accent); opacity: .22; }
+  .echo { fill: none; stroke: var(--accent); stroke-width: 7; stroke-linecap: round; }
+  .sensor:not([data-state="ok"]) .hit,
+  .sensor:not([data-state="ok"]) .echo { display: none; }
+  .sensor[data-state="nosignal"] .beam,
+  .sensor[data-state="nosignal"] .waves,
+  .sensor[data-state="waiting"] .waves { display: none; }
+  .sensor[data-state="nosignal"] .hc-board { opacity: .45; }
+  .glow { fill: none; stroke: var(--accent); stroke-width: 4; opacity: 0; transition: opacity .2s; }
+  .sensor[data-state="ok"] .glow, .sensor[data-state="nosignal"] .glow { opacity: .9; }
+
+  .dist-label {
+    font-size: 22px;
+    font-weight: 750;
+    fill: var(--accent);
+    paint-order: stroke;
+    stroke: var(--panel);
+    stroke-width: 6px;
+    stroke-linejoin: round;
+  }
+  .sensor:not([data-state="ok"]) .dist-label { font-size: 13px; font-weight: 600; }
+  .name-label { font-size: 13px; font-weight: 700; letter-spacing: .1em; fill: var(--ink); }
+
+  .wire { fill: none; stroke-width: 2.6; stroke-linecap: round; opacity: .9; }
+
+  /* Closer than the sensor's alertCm (it is making the buzzer sound): the beam and sensor flash */
+  .sensor[data-alert="true"] .hit { animation: pulse .45s ease-in-out infinite alternate; }
+  .sensor[data-alert="true"] .glow { animation: blink .45s ease-in-out infinite; }
+  @keyframes pulse { from { opacity: .2; } to { opacity: .6; } }
+
+  .bz-waves { display: none; }
+  #buzzer[data-on="true"] .bz-waves { display: inline; }
+  .bz-wave { fill: none; stroke: var(--alert); stroke-width: 3.5; }
+  .bz-glow { fill: var(--alert); opacity: 0; }
+  #buzzer[data-on="true"] .bz-glow { animation: flash .3s ease-in-out infinite alternate; }
+  @keyframes flash { from { opacity: .3; } to { opacity: .75; } }
+
+  /* Buzzing: the buzzer lights up bright red and glows */
+  .bz-face { fill: #17191d; }
+  #buzzer[data-on="true"] .bz-body { filter: drop-shadow(0 0 10px var(--alert)) drop-shadow(0 0 24px var(--alert)); }
+  #buzzer[data-on="true"] .bz-face { fill: url(#bz-lit); animation: bz-bright .3s ease-in-out infinite alternate; }
+  #buzzer[data-on="true"] .bz-ring { stroke: #ffd0d1; }
+  #buzzer[data-on="true"] .bz-hole { fill: #7a1114; }
+  #buzzer[data-on="true"] .bz-plus { fill: #fff; }
+  @keyframes bz-bright { from { filter: brightness(1); } to { filter: brightness(1.5); } }
+
+  [data-state="buzz"] { --accent: var(--alert); }
+  .card[data-state="buzz"] { background: color-mix(in srgb, var(--alert) 10%, var(--panel)); }
+
+  .cards { display: grid; gap: 14px; }
+  @media (min-width: 700px) and (max-width: 999px) {
+    .cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .legend { grid-column: 1 / -1; }
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 5px solid var(--accent);
+    border-radius: 12px;
+    padding: 14px 16px;
+    transition: border-color .2s;
+  }
+  .card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .card h2 { margin: 0; font-size: 14px; letter-spacing: .1em; text-transform: uppercase; }
+  .badge {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    padding: 3px 8px;
+    border-radius: 6px;
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    white-space: nowrap;
+  }
+  .reading { display: flex; align-items: baseline; gap: 6px; margin: 8px 0 2px; }
+  .num { font-size: 40px; font-weight: 750; line-height: 1; font-variant-numeric: tabular-nums; color: var(--accent); }
+  .unit { font-size: 16px; color: var(--muted); }
+  .zone { margin: 0 0 10px; color: var(--muted); font-size: 13px; min-height: 1.45em; }
+  .meter { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
+  .meter i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s, background .2s; }
+  .scale { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .pins { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
+
+  .legend { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; font-size: 13px; }
+  .legend h2 { margin: 0 0 6px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .legend ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  .legend li { display: flex; align-items: center; gap: 8px; }
+  .legend p { margin: 8px 0 0; color: var(--muted); font-size: 12px; }
+  .swatch { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Belt for Blind · Live sensors</h1>
+  <span id="conn" class="pill">Connecting…</span>
+</header>
+
+<main>
+  <div class="stage">
+    <svg id="scene" class="offline" viewBox="0 0 1000 790" role="img"
+         aria-label="ESP32 with three ultrasonic sensors facing left, forward and right">
+      <defs>
+        <radialGradient id="can" cx="40%" cy="35%" r="70%">
+          <stop offset="0" stop-color="#fbfcfd"/>
+          <stop offset=".55" stop-color="#c3c9d1"/>
+          <stop offset="1" stop-color="#7e8792"/>
+        </radialGradient>
+        <pattern id="mesh" width="3.4" height="3.4" patternUnits="userSpaceOnUse">
+          <rect width="3.4" height="3.4" fill="#4a5059"/>
+          <circle cx="1.7" cy="1.7" r=".9" fill="#1b1e23"/>
+        </pattern>
+        <linearGradient id="shield" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#eef0f3"/>
+          <stop offset=".5" stop-color="#c6ccd3"/>
+          <stop offset="1" stop-color="#a1a9b2"/>
+        </linearGradient>
+        <linearGradient id="hc-pcb" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#2c6fc1"/>
+          <stop offset="1" stop-color="#1b4c8c"/>
+        </linearGradient>
+        <radialGradient id="bz-lit" cx="45%" cy="40%" r="65%">
+          <stop offset="0" stop-color="#fff5f5"/>
+          <stop offset=".45" stop-color="#ff6b6e"/>
+          <stop offset="1" stop-color="#e5484d"/>
+        </radialGradient>
+      </defs>
+      <g id="esp32"></g>
+      <g id="sensors"></g>
+      <g id="wires"></g>
+      <g id="buzzer" data-on="false"></g>
+    </svg>
+  </div>
+
+  <aside class="cards" id="cards">
+    <article class="card" id="card-buzzer" data-state="waiting">
+      <div class="card-head"><h2>Buzzer</h2><span class="badge">WAITING</span></div>
+      <p class="zone">Left &amp; Right: closer than 15 cm<br>Center: closer than 30 cm</p>
+      <p class="pins">+ leg to D13 · − leg to GND</p>
+    </article>
+    <section class="legend">
+      <h2>Colours</h2>
+      <ul>
+        <li><span class="swatch" style="background: var(--alert)"></span>Too close: under 15 cm</li>
+        <li><span class="swatch" style="background: var(--very-close)"></span>Very close: 15 to 50 cm</li>
+        <li><span class="swatch" style="background: var(--close)"></span>Close: 50 cm to 1.5 m</li>
+        <li><span class="swatch" style="background: var(--far)"></span>Far: over 1.5 m</li>
+        <li><span class="swatch" style="background: rgb(var(--beam))"></span>Clear: nothing in front</li>
+      </ul>
+      <p>A flashing sensor is the one making the buzzer sound.</p>
+    </section>
+  </aside>
+</main>
+
+<script>
+  const SVG_NS = "http://www.w3.org/2000/svg";
+
+  // Same thresholds as src/main.cpp
+  const TOO_CLOSE_CM = 15;
+  const VERY_CLOSE_CM = 50;
+  const CLOSE_CM = 150;
+
+  // The drawn beam represents 0-2 m
+  const MAX_CM = 200;
+  const BEAM_PX = 250;
+  const HALF_ANGLE = 15 * Math.PI / 180; // HC-SR04 beam is roughly +/-15 degrees
+  const STALE_AFTER_S = 3;
+
+  // Each sensor is drawn facing "up" in its own coordinates, then rotated into place.
+  // x, y is the middle of the sensor's front edge. alertCm matches src/main.cpp.
+  const SENSORS = [
+    { name: "Left",   x: 300, y: 565, angle: -90, trig: "D25", echo: "D34", alertCm: 15 },
+    { name: "Center", x: 500, y: 290, angle: 0,   trig: "D26", echo: "D35", alertCm: 30 },
+    { name: "Right",  x: 700, y: 565, angle: 90,  trig: "D27", echo: "D32", alertCm: 15 },
+  ];
+
+  // ESP32 DevKit header pins, top to bottom, as printed on the board
+  const LEFT_PINS = ["EN", "VP", "VN", "D34", "D35", "D32", "D33", "D25", "D26", "D27", "D14", "D12", "D13", "GND", "VIN"];
+  const RIGHT_PINS = ["D23", "D22", "TX0", "RX0", "D21", "D19", "D18", "D5", "TX2", "RX2", "D4", "D2", "D15", "GND", "3V3"];
+  const BOARD = { x: 432, y: 420, w: 136, h: 290 };
+  const PIN_X_LEFT = 441, PIN_X_RIGHT = 559, PIN_Y0 = 452, PIN_STEP = 16;
+  const pinY = name => PIN_Y0 + LEFT_PINS.indexOf(name) * PIN_STEP;
+
+  // Sensor pin -> ESP32 pin, with wire colour
+  const sensorWires = s => [
+    { from: "VCC",  px: -30, to: "VIN",  color: "#e5484d" },
+    { from: "Trig", px: -10, to: s.trig, color: "#eab308" },
+    { from: "Echo", px: 10,  to: s.echo, color: "#06b6d4" },
+    { from: "Gnd",  px: 30,  to: "GND",  color: "#7c8594" },
+  ];
+
+  const toWorld = (s, lx, ly) => {
+    const a = s.angle * Math.PI / 180;
+    return [s.x + lx * Math.cos(a) - ly * Math.sin(a), s.y + lx * Math.sin(a) + ly * Math.cos(a)];
+  };
+  const coneEdge = r => [r * Math.sin(HALF_ANGLE), -r * Math.cos(HALF_ANGLE)];
+  const slicePath = r => {
+    const [x, y] = coneEdge(r);
+    return `M0 0 L${-x} ${y} A${r} ${r} 0 0 1 ${x} ${y} Z`;
+  };
+  const arcPath = r => {
+    const [x, y] = coneEdge(r);
+    return `M${-x} ${y} A${r} ${r} 0 0 1 ${x} ${y}`;
+  };
+  const cmToPx = cm => Math.min(cm, MAX_CM) / MAX_CM * BEAM_PX;
+  const zoneOf = cm =>
+    cm < TOO_CLOSE_CM ? "too-close" : cm < VERY_CLOSE_CM ? "very-close" : cm < CLOSE_CM ? "close" : "far";
+  const ZONE_TEXT = { "too-close": "Too close", "very-close": "Very close", close: "Close", far: "Far" };
+
+  function drawEsp32() {
+    const { x, y, w, h } = BOARD;
+    const pins = (names, px, anchor, lx) => names.map((n, i) => {
+      const py = PIN_Y0 + i * PIN_STEP;
+      return `<circle cx="${px}" cy="${py}" r="3.6" fill="#c9a648" stroke="#6f5a1c" stroke-width="1"/>
+              <circle cx="${px}" cy="${py}" r="1.3" fill="#3a2f10"/>
+              <text x="${lx}" y="${py + 2.2}" font-size="6.4" fill="#e3e7ec" text-anchor="${anchor}">${n}</text>`;
+    }).join("");
+
+    document.getElementById("esp32").innerHTML = `
+      <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="#1f232a" stroke="#0a0c0f" stroke-width="1.5"/>
+      <rect x="468" y="426" width="64" height="152" rx="3" fill="#15181d"/>
+      <path d="M474 456 V436 H482 V452 H490 V436 H498 V452 H506 V436 H514 V452 H522 V436 H526"
+            fill="none" stroke="#c9a648" stroke-width="2"/>
+      <rect x="471" y="462" width="58" height="113" rx="2" fill="url(#shield)" stroke="#8a929b"/>
+      <text x="500" y="486" font-size="7" font-weight="700" fill="#2b3036" text-anchor="middle">ESP-WROOM-32</text>
+      <text x="500" y="500" font-size="5.2" fill="#3c434b" text-anchor="middle">Wi-Fi + BT SoC</text>
+      <text x="500" y="509" font-size="5.2" fill="#3c434b" text-anchor="middle">ISM 2.4GHz</text>
+      <text x="500" y="518" font-size="5.2" fill="#3c434b" text-anchor="middle">802.11 b/g/n</text>
+      <rect x="486" y="538" width="28" height="18" rx="1.5" fill="none" stroke="#8a929b" stroke-width=".8"/>
+      <text x="500" y="592" font-size="6" fill="#aab2bc" text-anchor="middle">ESP32 DevKit</text>
+      <rect x="492" y="603" width="16" height="10" fill="#111317"/>
+      <rect x="489" y="622" width="22" height="16" fill="#111317"/>
+      <text x="500" y="632" font-size="4.5" fill="#7d8691" text-anchor="middle">CH340</text>
+      <rect x="481" y="650" width="5" height="3" fill="#ff4d4d"/>
+      <rect x="514" y="650" width="5" height="3" fill="#4d8dff"/>
+      <rect x="466" y="678" width="14" height="10" rx="1.5" fill="#d5d9de"/>
+      <circle cx="473" cy="683" r="3" fill="#2a2e35"/>
+      <text x="473" y="697" font-size="5" fill="#aab2bc" text-anchor="middle">EN</text>
+      <rect x="520" y="678" width="14" height="10" rx="1.5" fill="#d5d9de"/>
+      <circle cx="527" cy="683" r="3" fill="#2a2e35"/>
+      <text x="527" y="697" font-size="5" fill="#aab2bc" text-anchor="middle">BOOT</text>
+      <rect x="482" y="700" width="36" height="17" rx="2" fill="url(#shield)" stroke="#7d858f"/>
+      ${pins(LEFT_PINS, PIN_X_LEFT, "start", PIN_X_LEFT + 7)}
+      ${pins(RIGHT_PINS, PIN_X_RIGHT, "end", PIN_X_RIGHT - 7)}`;
+  }
+
+  function sensorMarkup(s) {
+    const ticks = [50, 100, 150, 200].map(cm => {
+      const r = cmToPx(cm);
+      const [ex, ey] = coneEdge(r);
+      const [tx, ty] = toWorld(s, ex + 6, ey);
+      const anchor = s.angle === 0 ? "start" : "middle";
+      const dy = s.angle === 90 ? 10 : s.angle === -90 ? -3 : 3;
+      return { arc: `<path class="tick" d="${arcPath(r)}"/>`,
+               label: `<text class="tick-label" x="${tx}" y="${ty + dy}" text-anchor="${anchor}">${cm < 100 ? cm + " cm" : cm / 100 + " m"}</text>` };
+    });
+
+    const waves = [0, 0.6, 1.2].map(delay => `
+      <path class="wave" d="${arcPath(BEAM_PX)}" vector-effect="non-scaling-stroke">
+        <animateTransform attributeName="transform" type="scale" from="0.06" to="1"
+                          dur="1.8s" begin="${delay}s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;1;0" dur="1.8s" begin="${delay}s" repeatCount="indefinite"/>
+      </path>`).join("");
+
+    const can = cx => `
+      <circle cx="${cx}" cy="40" r="32" fill="url(#can)" stroke="#6b737d"/>
+      <circle cx="${cx}" cy="40" r="25" fill="url(#mesh)" stroke="#2a2e35" stroke-width="1.5"/>`;
+
+    const pins = sensorWires(s).map(w => `
+      <rect x="${w.px - 3}" y="80" width="6" height="12" fill="#c9a648"/>
+      <text x="${w.px}" y="77" font-size="5.5" fill="#e8eef6" text-anchor="middle">${w.from}</text>`).join("");
+
+    const [nx, ny] = s.angle === 0 ? [s.x + 102, s.y + 45] : [s.x + (s.angle < 0 ? 40 : -40), s.y + 115];
+
+    return `
+      <g class="sensor" id="sensor-${s.name}" data-state="waiting">
+        <g transform="translate(${s.x} ${s.y}) rotate(${s.angle})">
+          <path class="beam" d="${slicePath(BEAM_PX)}"/>
+          ${ticks.map(t => t.arc).join("")}
+          <path class="hit"/>
+          <g class="waves">${waves}</g>
+          <path class="echo"/>
+          <g class="hc-board">
+            <rect class="glow" x="-94" y="-4" width="188" height="88" rx="9"/>
+            <rect x="-90" y="0" width="180" height="80" rx="5" fill="url(#hc-pcb)" stroke="#123a6b"/>
+            ${[[-83, 7], [83, 7], [-83, 73], [83, 73]].map(([cx, cy]) =>
+              `<circle cx="${cx}" cy="${cy}" r="3" fill="#0f2a4d" stroke="#c9a648" stroke-width="1"/>`).join("")}
+            ${can(-52)}${can(52)}
+            <rect x="-11" y="12" width="22" height="9" rx="4.5" fill="url(#can)" stroke="#6b737d"/>
+            <text x="0" y="52" font-size="8" font-weight="700" fill="#e8eef6" text-anchor="middle">HC-SR04</text>
+            <text x="-52" y="76" font-size="6" fill="#e8eef6" text-anchor="middle">T</text>
+            <text x="52" y="76" font-size="6" fill="#e8eef6" text-anchor="middle">R</text>
+            ${pins}
+          </g>
+        </g>
+        ${ticks.map(t => t.label).join("")}
+        <text class="name-label" x="${nx}" y="${ny}" text-anchor="${s.angle === 0 ? "start" : "middle"}">${s.name.toUpperCase()}</text>
+        <text class="dist-label"></text>
+      </g>`;
+  }
+
+  // Jumper wires from each sensor's header to the ESP32's left header (where D25-D35, GND and VIN are)
+  function wirePath(s, x0, y0, x1, y1, i) {
+    if (s.angle === -90) return `M${x0} ${y0} C${x0 + 25} ${y0}, ${x1 - 25} ${y1}, ${x1} ${y1}`;
+    if (s.angle === 0) {
+      const lx = 414 - i * 4;
+      return `M${x0} ${y0} C${x0} ${y0 + 34}, ${lx} ${y0 + 10}, ${lx} ${y0 + 60} L${lx} ${y1 - 16} Q${lx} ${y1}, ${x1} ${y1}`;
+    }
+    // Right sensor: down the right side, under the board, up the left side
+    const side = 582 + i * 4, lane = 742 + i * 6, lx = 418 - i * 4;
+    return `M${x0} ${y0} C${side} ${y0}, ${side} ${lane}, ${side - 40} ${lane}
+            L${lx + 40} ${lane} C${lx} ${lane}, ${lx} ${y1}, ${x1} ${y1}`;
+  }
+
+  function drawWires() {
+    document.getElementById("wires").innerHTML = SENSORS.flatMap(s =>
+      sensorWires(s).map((w, i) => {
+        const [x0, y0] = toWorld(s, w.px, 92);
+        const y1 = pinY(w.to);
+        return `<path class="wire" stroke="${w.color}" d="${wirePath(s, x0, y0, PIN_X_LEFT, y1, i)}"/>
+                <circle cx="${PIN_X_LEFT}" cy="${y1}" r="3.4" fill="${w.color}"/>`;
+      })).join("");
+  }
+
+  // Active buzzer, below-left of the board: + leg to D13, - leg to GND
+  const BUZZER = { x: 370, y: 745, pin: "D13" };
+  function drawBuzzer() {
+    const { x, y } = BUZZER;
+    const legs = [
+      { dy: -6, to: BUZZER.pin, color: "#ec4899" },
+      { dy: 6,  to: "GND",      color: "#7c8594" },
+    ];
+    const wires = legs.map(l => {
+      const y1 = pinY(l.to);
+      return `<path class="wire" stroke="${l.color}"
+                    d="M${x + 24} ${y + l.dy} C${x + 60} ${y + l.dy}, ${PIN_X_LEFT - 40} ${y1}, ${PIN_X_LEFT} ${y1}"/>
+              <circle cx="${PIN_X_LEFT}" cy="${y1}" r="3.4" fill="${l.color}"/>`;
+    }).join("");
+    const waves = [0, 0.2, 0.4].map(delay => `
+      <circle class="bz-wave" cx="${x}" cy="${y}" r="26">
+        <animate attributeName="r" from="26" to="60" dur="0.6s" begin="${delay}s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" from="1" to="0" dur="0.6s" begin="${delay}s" repeatCount="indefinite"/>
+      </circle>`).join("");
+
+    document.getElementById("buzzer").innerHTML = `
+      ${wires}
+      <g class="bz-waves">${waves}</g>
+      <circle class="bz-glow" cx="${x}" cy="${y}" r="40"/>
+      <g class="bz-body">
+        <circle class="bz-face" cx="${x}" cy="${y}" r="24" stroke="#000"/>
+        <circle class="bz-ring" cx="${x}" cy="${y}" r="17" fill="none" stroke="#2f343b" stroke-width="2"/>
+        <circle class="bz-hole" cx="${x}" cy="${y}" r="4" fill="#050608"/>
+        <text class="bz-plus" x="${x - 14}" y="${y - 7}" font-size="10" font-weight="700" fill="#cfd5dc">+</text>
+      </g>
+      <text class="name-label" x="${x - 34}" y="${y + 4}" text-anchor="end">BUZZER</text>`;
+  }
+
+  function cardMarkup(s) {
+    return `
+      <article class="card" id="card-${s.name}" data-state="waiting">
+        <div class="card-head"><h2>${s.name}</h2><span class="badge">WAITING</span></div>
+        <div class="reading"><span class="num">--</span><span class="unit">cm</span></div>
+        <p class="zone"></p>
+        <div class="meter"><i></i></div>
+        <div class="scale"><span>0</span><span>1 m</span><span>2 m+</span></div>
+        <p class="pins">Buzzes under ${s.alertCm} cm · Trig ${s.trig} · Echo ${s.echo}</p>
+      </article>`;
+  }
+
+  drawEsp32();
+  document.getElementById("sensors").innerHTML = SENSORS.map(sensorMarkup).join("");
+  drawWires();
+  drawBuzzer();
+  document.getElementById("cards").insertAdjacentHTML("afterbegin", SENSORS.map(cardMarkup).join(""));
+
+  // Per-sensor view state; the drawn distance eases toward the latest reading
+  const views = Object.fromEntries(SENSORS.map(s => {
+    const g = document.getElementById(`sensor-${s.name}`);
+    const card = document.getElementById(`card-${s.name}`);
+    return [s.name, {
+      s, g, card,
+      hit: g.querySelector(".hit"),
+      echo: g.querySelector(".echo"),
+      label: g.querySelector(".dist-label"),
+      targetPx: null,
+      curPx: null,
+    }];
+  }));
+
+  function placeLabel(v, r) {
+    const { s, label } = v;
+    const [x, y] = toWorld(s, 0, -(r + 14));
+    label.setAttribute("x", x);
+    label.setAttribute("y", y);
+    label.setAttribute("text-anchor", s.angle === 0 ? "middle" : s.angle < 0 ? "end" : "start");
+    label.setAttribute("dominant-baseline", s.angle === 0 ? "auto" : "middle");
+  }
+
+  function frame() {
+    for (const v of Object.values(views)) {
+      if (v.targetPx == null) continue;
+      v.curPx = v.curPx == null ? v.targetPx : v.curPx + (v.targetPx - v.curPx) * 0.25;
+      v.hit.setAttribute("d", slicePath(v.curPx));
+      v.echo.setAttribute("d", arcPath(v.curPx));
+      if (v.g.dataset.state === "ok") placeLabel(v, v.curPx);
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  function showSensor(v, reading) {
+    const state = reading ? reading.status : "waiting";
+    const zone = state === "ok" ? zoneOf(reading.cm) : "";
+    const alert = state === "ok" && reading.cm < v.s.alertCm;
+    for (const el of [v.g, v.card]) {
+      el.dataset.state = state;
+      el.dataset.zone = zone;
+      el.dataset.alert = alert;
+    }
+
+    const badge = alert
+      ? "TOO CLOSE!"
+      : { ok: "OBJECT DETECTED", clear: "CLEAR", nosignal: "NO SIGNAL", waiting: "WAITING" }[state];
+    const zoneText = {
+      ok: zone && `${ZONE_TEXT[zone]}${alert ? ": buzzer on" : ""}${reading.cm > MAX_CM ? " (beyond the 2 m drawing)" : ""}`,
+      clear: "Nothing in front within range",
+      nosignal: "Sensor not answering: check its wires",
+      waiting: "Waiting for a reading…",
+    }[state];
+    v.card.querySelector(".badge").textContent = badge;
+    v.card.querySelector(".num").textContent = state === "ok" ? reading.cm : "--";
+    v.card.querySelector(".zone").textContent = zoneText;
+    v.card.querySelector(".meter i").style.width = state === "ok" ? `${cmToPx(reading.cm) / BEAM_PX * 100}%` : "0";
+
+    if (state === "ok") {
+      v.targetPx = cmToPx(reading.cm);
+      v.label.textContent = `${reading.cm} cm`;
+    } else {
+      v.targetPx = null;
+      v.curPx = null;
+      v.label.textContent = { clear: "clear", nosignal: "no signal", waiting: "" }[state];
+      placeLabel(v, state === "clear" ? BEAM_PX : 6);
+    }
+  }
+
+  const buzzerDrawing = document.getElementById("buzzer");
+  const buzzerCard = document.getElementById("card-buzzer");
+  // on: true / false from the firmware, or null when there's no live data
+  function showBuzzer(on) {
+    buzzerDrawing.dataset.on = on === true;
+    buzzerCard.dataset.state = on == null ? "waiting" : on ? "buzz" : "quiet";
+    buzzerCard.querySelector(".badge").textContent = on == null ? "WAITING" : on ? "ON" : "OFF";
+  }
+
+  const conn = document.getElementById("conn");
+  const scene = document.getElementById("scene");
+  function showConnection(kind, text) {
+    conn.className = `pill ${kind}`;
+    conn.textContent = text;
+    scene.classList.toggle("offline", kind !== "live");
+  }
+
+  const events = new EventSource("/events");
+  events.onmessage = e => {
+    const snap = JSON.parse(e.data);
+    const stale = snap.age == null || snap.age > STALE_AFTER_S;
+    if (!snap.connected) {
+      showConnection("waiting", snap.error || "Waiting for the ESP32…");
+    } else if (stale) {
+      showConnection("waiting", snap.age == null
+        ? `Connected to ${snap.port}, waiting for readings…`
+        : `No readings for ${Math.round(snap.age)} s. Is the ESP32 running?`);
+    } else {
+      showConnection("live", `Live · ${snap.port}`);
+    }
+    for (const v of Object.values(views)) showSensor(v, stale ? null : snap.sensors[v.s.name]);
+    showBuzzer(stale ? null : snap.buzzer);
+  };
+  events.onerror = () => showConnection("down", "Live-view server stopped: start it again in the terminal");
+</script>
+</body>
+</html>

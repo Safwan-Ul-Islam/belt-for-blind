@@ -1,6 +1,6 @@
 # Belt for Blind
 
-ESP32 + 3 × HC-SR04 ultrasonic sensors. This first sketch only checks that each sensor triggers, gets an echo, and calculates a distance.
+ESP32 + 3 × HC-SR04 ultrasonic sensors, a vibration motor for alerts and an MPU6050 IMU. The belt measures distances and vibrates when something is too close. It pauses while the wearer sits, to save battery, and wakes when they stand up or walk.
 
 ## Wiring
 
@@ -12,7 +12,30 @@ Pin names below are as printed on the ESP32 DevKit board (`D25` = GPIO 25). `VIN
 | Center | VIN | GND | D26  | D35  |
 | Right  | VIN | GND | D27  | D32  |
 
-Buzzer (TMB12A05, active): **+** leg (the longer one) → `D13`, **−** leg → `GND`. It sounds when Left or Right sees something closer than 15 cm, or Center closer than 30 cm (set per sensor by `alertCm` in `src/main.cpp`).
+IMU (MPU6050 / GY-521 module): `VCC` → `3V3`, `GND` → `GND`, `SDA` → `D21`, `SCL` → `D22`. Fix it firmly to the belt, because sitting is detected from its tilt.
+
+Three 3V coin vibration motors, one per side, each switched by a logic-level N-channel MOSFET:
+
+| Motor | Signal pin |
+|-------|-----------|
+| Left   | `D13` |
+| Center | `D33` |
+| Right  | `D4`  |
+
+For each motor:
+
+| From | To |
+|------|----|
+| Signal pin | 220Ω resistor → MOSFET gate |
+| MOSFET gate | 10kΩ resistor → `GND` (keeps the motor off while the ESP32 starts) |
+| MOSFET source | `GND` |
+| MOSFET drain | motor − (black) |
+| Motor + (red) | `3V3` |
+| 1N4007 diode across the motor | striped end on motor + / `3V3` |
+
+The MOSFET must turn fully on at 3.3V (e.g. IRLZ44N, AO3400); IRFZ44N or IRF540N won't.
+
+Each motor runs when its sensor sees something too close: Left or Right under 15 cm, Center under 30 cm (set per sensor by `alertCm` in `src/main.cpp`).
 
 **Important:** the HC-SR04 ECHO pin outputs 5V, but ESP32 pins are 3.3V. Put a voltage divider on each ECHO line
 (ECHO → 1kΩ → GPIO, and GPIO → 2kΩ → GND), or use HC-SR04P / RCWL-1601 sensors that run at 3.3V.
@@ -26,17 +49,24 @@ Buzzer (TMB12A05, active): **+** leg (the longer one) → `D13`, **−** leg →
 Expected output:
 
 ```
-Left  :   42.3 cm  |  Center: nothing in range  |  Right : NO SIGNAL (check wiring)
+---------------- distance to obstacle ----------------
+  Left      42 cm   ####                  VERY CLOSE
+  Center     --      nothing in front
+  Right   NO SIGNAL - check this sensor's wires
+  Motor   off
+  IMU     tilt   3 deg   motion 0.012 g
 ```
 
 Move your hand in front of each sensor. If its number changes, that sensor works.
 
-- `nothing in range`: the sensor works, but nothing within ~5 m reflected the sound back.
-- `NO SIGNAL (check wiring)`: the sensor isn't answering at all. Check its Trig, Echo, VCC and GND wires.
+- `nothing in front`: the sensor works, but nothing within ~5 m reflected the sound back.
+- `NO SIGNAL`: the sensor isn't answering at all. Check its Trig, Echo, VCC and GND wires.
+
+The belt pauses after the wearer has been still for 5 s and tilted more than 20° from upright. It wakes when they return within 12° of upright or walk for 1 s. If the IMU isn't found, the belt stays on. Tune these limits from the `IMU` line, using the constants at the top of `src/main.cpp`.
 
 ## Live view in the browser
 
-A web page that draws the ESP32 and the three sensors and shows each detection live.
+A web page that draws the ESP32, the three sensors, the three vibration motors and the MPU6050, and shows each detection, which motors are vibrating, the IMU's tilt and motion, and when the belt is paused because the wearer sits.
 
 1. Close the Serial Monitor: only one program can use the USB port at a time.
 2. Run, from this folder:

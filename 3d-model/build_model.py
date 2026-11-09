@@ -2,8 +2,9 @@
 
 Builds the hardware as it sits on the desk: an ESP32 DevKit plugged into a
 half-size breadboard, three HC-SR04 sensors on jumper wires (left, front,
-right), the 1k/2k divider on each Echo line and the TMB12A05 buzzer on D13.
-Wiring matches src/main.cpp and the README.
+right) with the 1k/2k divider on each Echo line, and a second half-size
+breadboard with the MPU6050 and three IRLZ44N drivers for the coin vibration
+motors (left D13, center D33, right D4). Wiring matches src/main.cpp and the README.
 
 Run with Blender (no window needed):
     /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup \
@@ -35,8 +36,13 @@ def col_x(col):
     return (col - 15.5) * PITCH
 
 
-def hole(col, row):
-    return Vector((col_x(col), ROWS.get(row, RAILS.get(row)), BB_TOP))
+# Second half-size breadboard, in front of the first, for the motor drivers and the MPU6050
+DRIVER_BOARD_Y = -68
+
+
+def hole(col, row, board=0):
+    """Top of a breadboard hole; board 1 is the driver board."""
+    return Vector((col_x(col), ROWS.get(row, RAILS.get(row)) + (DRIVER_BOARD_Y if board else 0), BB_TOP))
 
 
 # ESP32 pins sit in rows b (VIN side) and j, columns 2 (VIN) to 16 (EN)
@@ -47,6 +53,13 @@ ESP_3V3_SIDE = ["D23", "D22", "TX0", "RX0", "D21", "D19", "D18", "D5", "TX2", "R
 
 def esp_col(pin):
     return 16 - ESP_VIN_SIDE.index(pin)
+
+
+def esp_pin_top(pin):
+    """Tip of a 3V3-side header pin. That row has no free breadboard hole beside it, so those
+    jumpers are drawn with female ends pushed onto the pin tips."""
+    i = ESP_3V3_SIDE.index(pin)
+    return Vector((col_x(16 - i), ROWS["j"], ESP_POS.z + 2.6))
 
 
 # Sensors: name, position on the desk, facing angle (0 = forward, +y), breadboard holes for VCC/Trig/Echo/Gnd
@@ -62,7 +75,15 @@ DIVIDERS = [
     {"r1k": ((25, "d"), (29, "d")), "r2k": ((29, "a"), (29, "top-")), "jumper": ((29, "e"), "D35")},
     {"r1k": ((21, "h"), (25, "h")), "r2k": ((25, "j"), (25, "bot-")), "jumper": ((25, "f"), "D32")},
 ]
-BUZZER_PLUS, BUZZER_MINUS = (27, "g"), (30, "g")
+# Motor drivers on board 1: name, gate column (drain and source follow), ESP32 signal pin, motor position.
+# Center's motor leads go round the right of the first breadboard (via points on the desk).
+DRIVERS = [
+    ("Left",   2,  "D13", (-95, -50), ()),
+    ("Center", 9,  "D33", (55, 118),  ((62, 34), (55, -36))),
+    ("Right",  16, "D4",  (95, -50),  ()),
+]
+MPU_COL = 22  # VCC on board 1 row i; GND, SCL, SDA, XDA, XCL, AD0, INT follow
+MPU_PINS = ["VCC", "GND", "SCL", "SDA", "XDA", "XCL", "AD0", "INT"]
 
 # ---------------------------------------------------------------- scene helpers
 COLLECTIONS = {}
@@ -282,18 +303,23 @@ def make_materials():
         "pcb_blue": mat("HC-SR04 PCB", "#1e5fb0", roughness=0.45, coat=0.15, bump=0.03, bump_scale=1.5),
         "can": mat("Transducer can", "#d9dde2", metallic=1.0, roughness=0.32, bump=0.08, bump_scale=4),
         "mesh": mat("Transducer mesh", "#26282c", roughness=0.95, bump=0.6, bump_scale=2.5, pattern="checker"),
-        "buzzer": mat("Buzzer body", "#121212", roughness=0.3, coat=0.4),
+        "gy521": mat("GY-521 PCB", "#1f3c88", roughness=0.45, coat=0.15, bump=0.03, bump_scale=1.5),
+        "diode": mat("Diode body", "#1a1a1a", roughness=0.4, coat=0.4),
+        "foam": mat("Motor foam", "#0e0e0e", roughness=0.95, bump=0.3, bump_scale=3),
         "resistor": mat("Resistor body", "#d9c49b", roughness=0.45, coat=0.5),
         "lead": mat("Resistor lead", "#c3c7cc", metallic=1.0, roughness=0.25),
         "band_brown": mat("Band brown", "#6b3a1e", roughness=0.45, coat=0.5),
         "band_black": mat("Band black", "#111111", roughness=0.45, coat=0.5),
         "band_red": mat("Band red", "#c0262d", roughness=0.45, coat=0.5),
+        "band_orange": mat("Band orange", "#e2711d", roughness=0.45, coat=0.5),
         "band_gold": mat("Band gold", "#c9a14a", metallic=1.0, roughness=0.35),
         "wire_red": mat("Wire red", "#d62828", roughness=0.35, coat=0.25),
         "wire_black": mat("Wire black", "#222222", roughness=0.35, coat=0.25),
         "wire_yellow": mat("Wire yellow", "#f2c014", roughness=0.35, coat=0.25),
         "wire_blue": mat("Wire blue", "#2f6fe0", roughness=0.35, coat=0.25),
         "wire_pink": mat("Wire pink", "#ff5fa2", roughness=0.35, coat=0.25),
+        "wire_purple": mat("Wire purple", "#8e44ad", roughness=0.35, coat=0.25),
+        "wire_green": mat("Wire green", "#1f9d55", roughness=0.35, coat=0.25),
         "beam": mat("Sound beam", "#5aa9ff", emission=0.6, alpha=0.12),
         "label": mat("Label", "#3a3d42", roughness=0.7),
     }
@@ -303,8 +329,8 @@ WIRE_COLOR = {"VCC": "wire_red", "Gnd": "wire_black", "Trig": "wire_yellow", "Ec
 
 
 # ---------------------------------------------------------------- parts
-def build_breadboard(M, root):
-    g = group("Breadboard", root, coll="Breadboard")
+def build_breadboard(M, root, name="Breadboard", y=0):
+    g = group(name, root, loc=(0, y, 0), coll="Breadboard")
     box("Breadboard body", BB_SIZE, (0, 0, BB_TOP / 2), M["breadboard"], g, coll="Breadboard", bevel=0.8)
     box("Centre channel", (80, 2.2, 0.06), (0, 0, BB_TOP + 0.01), M["channel"], g, coll="Breadboard")
 
@@ -472,44 +498,108 @@ def build_resistor(M, root, name, h1, h2, bands, standing):
         obj_from_bm(f"{name} {band} band", bm, M[band], root)
 
 
-def build_buzzer(M, root):
-    a, b = hole(*BUZZER_PLUS), hole(*BUZZER_MINUS)
-    c = (a + b) / 2
-    g = group("Buzzer TMB12A05", root, loc=(c.x, c.y, BB_TOP + 0.4))
+def build_mosfet(M, root, name, gate_col):
+    """IRLZ44N (TO-220) standing in board 1 row d, printed side facing -y: legs G, D, S left to right."""
+    c = hole(gate_col + 1, "d", 1)
+    g = group(name, root, loc=(c.x, c.y, BB_TOP))
+    box(f"{name} body", (10.2, 4.5, 9.2), (0, 0, 7.6), M["plastic_black"], g, bevel=0.3)
+    box(f"{name} tab", (10.2, 1.3, 15.5), (0, 2.9, 10.75), M["solder"], g, bevel=0.3)
     bm = bmesh.new()
-    bm_cyl(bm, 6, 9.5, (0, 0, 4.75), segments=48)
-    obj_from_bm("Buzzer body", bm, M["buzzer"], g, bevel=0.5)
+    bm_cyl(bm, 1.8, 1.5, (0, 2.9, 15.2), axis=(0, 1, 0), segments=20)
+    obj_from_bm(f"{name} tab hole", bm, M["hole"], g)
     bm = bmesh.new()
-    bm_cyl(bm, 1.0, 0.3, (0, 0, 9.55), segments=20)
-    obj_from_bm("Buzzer sound hole", bm, M["plastic_black"], g)
-    text("Buzzer + mark", "+", 2.2, (-3.6, 0, 9.52), M["silk"], g)
+    for dx in (-PITCH, 0, PITCH):
+        bm_box(bm, (0.8, 0.5, 4.5), (dx, 0, 0.75))
+    obj_from_bm(f"{name} legs", bm, M["solder"], g)
+    text(f"{name} print", "IRLZ44N", 1.5, (0, -2.26, 9.5), M["silk"], g, rot=(math.radians(90), 0, 0))
+    text(f"{name} pins", "G   D   S", 1.1, (0, -2.26, 4.6), M["silk"], g, rot=(math.radians(90), 0, 0))
 
-    # Sound rings for the live link, hidden until it runs
-    ring_mat = mat("Live buzzer ring", "#ff2a2a", emission=1.0, alpha=0.6)
+
+def build_diode(M, root, name, h1, h2):
+    """1N4007 standing over h1 with the plain end down; the striped end's lead bends over to h2."""
+    a, b = hole(*h1), hole(*h2)
+    base = BB_TOP + 1.5
+    bm = bmesh.new()
+    bm_cyl(bm, 1.35, 5.2, (a.x, a.y, base + 2.6), segments=20)
+    obj_from_bm(f"{name} body", bm, M["diode"], root, bevel=0.3)
+    bm = bmesh.new()
+    bm_cyl(bm, 1.4, 0.8, (a.x, a.y, base + 4.5), segments=20)
+    obj_from_bm(f"{name} stripe", bm, M["solder"], root)
+    wire(f"{name} lead 1", [(a.x, a.y, BB_TOP - 1.5), (a.x, a.y, base)], M["lead"], root, 0.4, smooth=False)
+    wire(f"{name} lead 2", [(a.x, a.y, base + 5.2), (a.x, a.y, base + 6.6), (b.x, b.y, base + 6.6), (b.x, b.y, BB_TOP - 1.5)],
+         M["lead"], root, 0.4, smooth=False)
+
+
+def build_motor(M, root, name, pos):
+    """3V coin vibration motor lying on the desk. Returns where its red and black leads leave it."""
+    g = group(f"Motor {name}", root, loc=(pos[0], pos[1], 0))
+    top = mat(f"Motor top {name}", "#c9ced4", metallic=1.0, roughness=0.3, bump=0.08, bump_scale=5)
+    bm = bmesh.new()
+    bm_cyl(bm, 5, 0.4, (0, 0, 0.2), segments=40)
+    obj_from_bm(f"Motor {name} foam", bm, M["foam"], g)
+    bm = bmesh.new()
+    bm_cyl(bm, 5, 2.4, (0, 0, 1.6), segments=48)
+    obj_from_bm(f"Motor {name} body", bm, top, g, bevel=0.3)
+    text(f"Motor {name} print", "3V", 1.8, (0, 0, 2.81), M["dark_print"], g)
+
+    # Rings for the live link, hidden until it runs
+    ring_mat = mat("Live motor ring", "#ff2a2a", emission=1.0, alpha=0.6)
     for k in range(3):
-        cu = bpy.data.curves.new(f"Live buzzer ring {k}", "CURVE")
-        cu.dimensions, cu.bevel_depth, cu.bevel_resolution = "3D", 0.45, 2
+        cu = bpy.data.curves.new(f"Live motor ring {name} {k}", "CURVE")
+        cu.dimensions, cu.bevel_depth, cu.bevel_resolution = "3D", 0.35, 2
         sp = cu.splines.new("POLY")
         sp.points.add(47)
         for i, pt in enumerate(sp.points):
             a = 2 * math.pi * i / 48
-            pt.co = (7.5 * math.cos(a), 7.5 * math.sin(a), 0, 1)
+            pt.co = (6.5 * math.cos(a), 6.5 * math.sin(a), 0, 1)
         sp.use_cyclic_u = True
-        ring = add_obj(f"Live buzzer ring {k}", cu, ring_mat, g, "Live", loc=(0, 0, 10.5 + k))
+        ring = add_obj(f"Live motor ring {name} {k}", cu, ring_mat, g, "Live", loc=(0, 0, 3.2))
         ring.hide_viewport = ring.hide_render = True
+    return {"red": Vector((pos[0] + 4.6, pos[1] + 1.0, 1.2)), "black": Vector((pos[0] + 4.6, pos[1] - 1.0, 1.2))}
+
+
+def build_mpu6050(M, root):
+    """GY-521 board standing in board 1 row i, components facing -y."""
+    first, last = hole(MPU_COL, "i", 1), hole(MPU_COL + 7, "i", 1)
+    c = (first + last) / 2
+    g = group("MPU6050 (GY-521)", root, loc=(c.x, c.y, BB_TOP))
+    box("GY-521 header", (20.3, 2.5, 2.5), (0, 0, 1.25), M["plastic_black"], g, bevel=0.2)
+    box("GY-521 PCB", (21, 1.6, 15.6), (0, 0, 10.3), M["gy521"], g, bevel=0.3)
+    box("MPU-6050 chip", (4, 0.9, 4), (0, -1.25, 11.5), M["chip"], g, bevel=0.1)
+    box("GY-521 regulator", (3, 1.0, 1.5), (-6, -1.3, 8.5), M["chip"], g, bevel=0.1)
+    box("GY-521 power LED", (1.0, 0.5, 0.6), (6, -1.05, 8.5), M["led_red"], g)
+    bm = bmesh.new()
+    for x in (-7.6, 7.6):
+        bm_cyl(bm, 1.5, 0.1, (x, -0.82, 15.6), axis=(0, 1, 0), segments=16)
+    obj_from_bm("GY-521 mounting holes", bm, M["solder"], g)
+    text("GY-521 print", "GY-521", 1.6, (0, -0.82, 15.2), M["silk"], g, rot=(math.radians(90), 0, 0))
+    for i, pin in enumerate(MPU_PINS):
+        text(f"GY-521 {pin} label", pin, 0.7, ((i - 3.5) * PITCH, -0.82, 4.4), M["silk"], g, rot=(math.radians(90), 0, 0))
+    label = text("Live IMU", "", 6, (c.x, c.y - 4, BB_TOP + 34), mat("Live IMU text", "#5aa9ff", emission=0.5),
+                 root, rot=(math.radians(90), 0, 0), coll="Live")
+    label.hide_viewport = label.hide_render = True
 
 
 def male_end_top(h):
     return Vector((h.x, h.y, BB_TOP + 14))
 
 
-def jumper_arc(M, root, name, h1, h2, color, housings):
-    a, b = male_end_top(h1), male_end_top(h2)
-    for h in (h1, h2):
-        bm_box(housings, (2.4, 2.4, 14), (h.x, h.y, BB_TOP + 7))
+def female_on_esp_pin(pin, housings):
+    p = esp_pin_top(pin)
+    bm_box(housings, (2.4, 2.4, 10), (p.x, p.y, p.z + 4))
+    return Vector((p.x, p.y, p.z + 9))
+
+
+def wire_arc(M, root, name, a, b, color):
     lift = 6 + 0.22 * (b - a).length
     mid = (a + b) / 2 + Vector((0, 0, lift))
     wire(name, [a, a + Vector((0, 0, 6)), mid, b + Vector((0, 0, 6)), b], M[color], root)
+
+
+def jumper_arc(M, root, name, h1, h2, color, housings):
+    for h in (h1, h2):
+        bm_box(housings, (2.4, 2.4, 14), (h.x, h.y, BB_TOP + 7))
+    wire_arc(M, root, name, male_end_top(h1), male_end_top(h2), color)
 
 
 def jumper_flat(M, root, name, h1, h2, color):
@@ -518,35 +608,37 @@ def jumper_flat(M, root, name, h1, h2, color):
          M[color], root, radius=0.5, smooth=False)
 
 
-def sensor_wire(M, root, name, start, h, color, idx, housings):
-    """Female end on the sensor pin, along the desk, up over the breadboard edge, male end in the hole."""
-    bm_box(housings, (2.4, 2.4, 14), (h.x, h.y, BB_TOP + 7))
-    top = male_end_top(h)
+def desk_wire(M, root, name, start, top, color, idx, board_y=0, via=(), radius=0.6, desk_z=0.7):
+    """From a loose part along the desk (through any via points), up over the edge of the breadboard
+    centred at board_y, and down to top: the top of whatever is plugged into the hole."""
     s, t = start.xy, top.xy
-    away = (s - t).normalized()
+    last = Vector(via[-1]) if via else s
+    away = (last - t).normalized()
     edge = t.copy()
-    while abs(edge.x) < BB_SIZE[0] / 2 + 6 and abs(edge.y) < BB_SIZE[1] / 2 + 6:
+    while abs(edge.x) < BB_SIZE[0] / 2 + 6 and abs(edge.y - board_y) < BB_SIZE[1] / 2 + 6:
         edge += away
     side = Vector((-away.y, away.x)) * (idx - 1.5) * 1.4
-    toward = -away
-    mid = (s + edge) / 2 + side
-    pts = [
-        start,
-        Vector((*(s + (edge - s).normalized() * 8), 0.7)),
-        Vector((*mid, 0.7)),
-        Vector((*edge, 0.9)),
-        Vector((*(edge + toward * 4), BB_TOP + 22)),
-        Vector((*t, top.z + 9)),
-        top,
-    ]
+    first = Vector(via[0]) if via else edge
+    desk = [Vector((*(s + (first - s).normalized() * 8), desk_z))]
+    desk += [Vector((*(Vector(v) + side), desk_z)) for v in via] or [Vector((*((s + edge) / 2 + side), desk_z))]
+    pts = [start, *desk, Vector((*edge, desk_z + 0.2)), Vector((*(edge - away * 4), BB_TOP + 22)),
+           Vector((*t, top.z + 9)), top]
 
     def flat(a, b):
         d = pts[b] - pts[a]
         return Vector((d.x, d.y, 0))
 
-    # Lie flat along the desk (points 1-3), then turn straight up beside the breadboard
-    handles = {1: (flat(0, 2), flat(0, 2)), 2: (flat(1, 3), flat(1, 3)), 3: (flat(2, 3), (0, 0, 1))}
-    wire(name, pts, M[color], root, handles=handles)
+    # Lie flat along the desk, then turn straight up beside the breadboard
+    handles = {i: (flat(i - 1, i + 1), flat(i - 1, i + 1)) for i in range(1, len(desk) + 1)}
+    e = len(desk) + 1
+    handles[e] = (flat(e - 1, e), (0, 0, 1))
+    wire(name, pts, M[color], root, radius=radius, handles=handles)
+
+
+def sensor_wire(M, root, name, start, h, color, idx, housings):
+    """Female end on the sensor pin, along the desk, up over the breadboard edge, male end in the hole."""
+    bm_box(housings, (2.4, 2.4, 14), (h.x, h.y, BB_TOP + 7))
+    desk_wire(M, root, name, start, male_end_top(h), color, idx)
 
 
 def build_wiring(M, root, sensor_pins):
@@ -567,17 +659,54 @@ def build_wiring(M, root, sensor_pins):
 
     jumper_flat(M, root, "VIN to + rail", hole(esp_col("VIN"), "a"), hole(esp_col("VIN"), "top+"), "wire_red")
     jumper_flat(M, root, "GND to - rail", hole(esp_col("GND"), "a"), hole(esp_col("GND"), "top-"), "wire_black")
-    jumper_arc(M, root, "D13 to buzzer +", hole(esp_col("D13"), "a"), hole(BUZZER_PLUS[0], "j"), "wire_pink", housings)
-    jumper_flat(M, root, "Buzzer - to - rail", hole(BUZZER_MINUS[0], "j"), hole(BUZZER_MINUS[0], "bot-"), "wire_black")
     jumper_arc(M, root, "Top - rail to bottom - rail", hole(27, "top-"), hole(27, "bot-"), "wire_black", housings)
+
+    # Driver board power: its + rail is 3V3, its - rail is GND
+    b = hole(1, "top+", 1)
+    bm_box(housings, (2.4, 2.4, 14), (b.x, b.y, BB_TOP + 7))
+    wire_arc(M, root, "3V3 to driver board + rail", female_on_esp_pin("3V3", housings), male_end_top(b), "wire_red")
+    jumper_arc(M, root, "GND to driver board - rail", hole(2, "bot-"), hole(1, "top-", 1), "wire_black", housings)
+
+    for name, gate, pin, motor_pos, via in DRIVERS:
+        build_mosfet(M, root, f"IRLZ44N {name}", gate)
+        build_resistor(M, root, f"{name} 10k", (gate, "a", 1), (gate, "top-", 1),
+                       ("band_brown", "band_black", "band_orange", "band_gold"), True)
+        build_resistor(M, root, f"{name} 220", (gate, "e", 1), (gate, "f", 1),
+                       ("band_red", "band_red", "band_brown", "band_gold"), False)
+        build_diode(M, root, f"1N4007 {name}", (gate + 1, "b", 1), (gate + 1, "top+", 1))
+        jumper_flat(M, root, f"{name} source to GND", hole(gate + 2, "a", 1), hole(gate + 2, "top-", 1), "wire_black")
+
+        signal_end = hole(gate, "h", 1)
+        bm_box(housings, (2.4, 2.4, 14), (signal_end.x, signal_end.y, BB_TOP + 7))
+        if pin in ESP_VIN_SIDE:
+            h = hole(esp_col(pin), "a")
+            bm_box(housings, (2.4, 2.4, 14), (h.x, h.y, BB_TOP + 7))
+            start = male_end_top(h)
+        else:
+            start = female_on_esp_pin(pin, housings)
+        wire_arc(M, root, f"{pin} to {name} gate", start, male_end_top(signal_end), "wire_pink")
+
+        leads = build_motor(M, root, name, motor_pos)
+        for idx, (lead, end) in enumerate((("red", hole(gate + 3, "top+", 1)), ("black", hole(gate + 1, "a", 1)))):
+            desk_wire(M, root, f"Motor {name} {lead} lead", leads[lead], Vector((end.x, end.y, BB_TOP + 0.3)),
+                      f"wire_{lead}", idx + 1, board_y=DRIVER_BOARD_Y, via=via, radius=0.35, desk_z=1.7)
+
+    build_mpu6050(M, root)
+    for idx, (pin, color, target) in enumerate((("VCC", "wire_red", ("top+", 28)), ("GND", "wire_black", ("top-", 29)))):
+        jumper_arc(M, root, f"MPU6050 {pin}", hole(MPU_COL + idx, "g", 1), hole(target[1], target[0], 1), color, housings)
+    for pin, esp, color in (("SCL", "D22", "wire_purple"), ("SDA", "D21", "wire_green")):
+        h = hole(MPU_COL + MPU_PINS.index(pin), "g", 1)
+        bm_box(housings, (2.4, 2.4, 14), (h.x, h.y, BB_TOP + 7))
+        wire_arc(M, root, f"MPU6050 {pin} to {esp}", male_end_top(h), female_on_esp_pin(esp, housings), color)
     obj_from_bm("Jumper housings (on breadboard)", housings, M["plastic_black"], root, coll="Wires", bevel=0.25)
 
 
 def build_labels(M, root):
-    for body, x, y in (("LEFT", -125, -22), ("CENTER", 52, 108), ("RIGHT", 125, -22),
-                       ("ESP32", -16.5, -36), ("BUZZER", 33, -36)):
-        text(f"Label {body}", body, 6, (x, y, 0.05), M["label"], root, coll="Labels")
-    status = text("Live status", "", 6, (0, -55, 8), M["label"], root, rot=(math.radians(90), 0, 0), coll="Live")
+    for body, x, y in (("LEFT", -125, -22), ("CENTER", 52, 140), ("RIGHT", 125, -22), ("ESP32", -60, 0),
+                       ("MOTOR DRIVERS + MPU6050", 0, -104), ("LEFT MOTOR", -95, -60), ("RIGHT MOTOR", 95, -60)):
+        text(f"Label {body}", body, 6 if len(body) < 12 else 4, (x, y, 0.05), M["label"], root, coll="Labels")
+    status = text("Live status", "", 7, (0, -112, 8), mat("Live status text", "#e8eef6", emission=0.4),
+                  root, rot=(math.radians(90), 0, 0), coll="Live")
     status.hide_viewport = status.hide_render = True
 
 
@@ -727,15 +856,15 @@ def main():
     root.scale = (0.001, 0.001, 0.001)
 
     build_breadboard(M, root)
+    build_breadboard(M, root, "Driver breadboard", DRIVER_BOARD_Y)
     build_esp32(M, root)
     sensor_pins = [build_hcsr04(M, root, name, pos, angle) for name, pos, angle, _ in SENSORS]
-    build_buzzer(M, root)
     build_wiring(M, root, sensor_pins)
     build_labels(M, root)
     build_optional_desk(root)
     embed_live_link()
 
-    setup_scene(target=(0, 0.03, 0.01), eye=(0.12, -0.33, 0.30))
+    setup_scene(target=(0, -0.012, 0.01), eye=(0.13, -0.40, 0.33))
     bpy.ops.wm.save_as_mainfile(filepath=out)
     print(f"Saved {out} ({len(bpy.data.objects)} objects)")
     if preview:

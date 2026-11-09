@@ -12,7 +12,7 @@
     --muted: #5f6b7a;
     --line: #d9dee5;
     --beam: 37 99 235; /* rgb triplet, used with alpha */
-    --alert: #e5484d;       /* red: only used when the buzzer is on */
+    --alert: #e5484d;       /* red: too close, and a motor vibrating */
     --very-close: #ea6a12;  /* orange */
     --close: #b98900;       /* yellow */
     --far: #1f9d55;         /* green */
@@ -97,7 +97,7 @@
   #scene.offline { filter: grayscale(1); opacity: .45; }
 
   /* Accent colour follows each sensor's state; shared by the drawing and the cards */
-  .sensor, .card { --accent: var(--idle); }
+  .sensor, .card, .imu { --accent: var(--idle); }
   [data-state="ok"][data-zone="too-close"] { --accent: var(--alert); }
   [data-state="ok"][data-zone="very-close"] { --accent: var(--very-close); }
   [data-state="ok"][data-zone="close"] { --accent: var(--close); }
@@ -117,6 +117,8 @@
   .sensor[data-state="nosignal"] .waves,
   .sensor[data-state="waiting"] .waves { display: none; }
   .sensor[data-state="nosignal"] .hc-board { opacity: .45; }
+  .sensor[data-state="paused"] { opacity: .35; }
+  .sensor[data-state="paused"] .waves { display: none; }
   .glow { fill: none; stroke: var(--accent); stroke-width: 4; opacity: 0; transition: opacity .2s; }
   .sensor[data-state="ok"] .glow, .sensor[data-state="nosignal"] .glow { opacity: .9; }
 
@@ -134,29 +136,46 @@
 
   .wire { fill: none; stroke-width: 2.6; stroke-linecap: round; opacity: .9; }
 
-  /* Closer than the sensor's alertCm (it is making the buzzer sound): the beam and sensor flash */
+  /* Closer than the sensor's alertCm (its motor is vibrating): the beam and sensor flash */
   .sensor[data-alert="true"] .hit { animation: pulse .45s ease-in-out infinite alternate; }
   .sensor[data-alert="true"] .glow { animation: blink .45s ease-in-out infinite; }
   @keyframes pulse { from { opacity: .2; } to { opacity: .6; } }
 
-  .bz-waves { display: none; }
-  #buzzer[data-on="true"] .bz-waves { display: inline; }
-  .bz-wave { fill: none; stroke: var(--alert); stroke-width: 3.5; }
-  .bz-glow { fill: var(--alert); opacity: 0; }
-  #buzzer[data-on="true"] .bz-glow { animation: flash .3s ease-in-out infinite alternate; }
+  /* Vibrating motor: shakes, glows red and sends out rings */
+  .mt-waves { display: none; }
+  .motor[data-on="true"] .mt-waves { display: inline; }
+  .mt-wave { fill: none; stroke: var(--alert); stroke-width: 3; }
+  .mt-glow { fill: var(--alert); opacity: 0; }
+  .motor[data-on="true"] .mt-glow { animation: flash .3s ease-in-out infinite alternate; }
   @keyframes flash { from { opacity: .3; } to { opacity: .75; } }
+  .motor[data-on="true"] .mt-body { animation: shake .09s linear infinite; filter: drop-shadow(0 0 8px var(--alert)); }
+  @keyframes shake {
+    25% { transform: translate(2px, -1px); }
+    50% { transform: translate(-1px, 2px); }
+    75% { transform: translate(-2px, -1px); }
+  }
 
-  /* Buzzing: the buzzer lights up bright red and glows */
-  .bz-face { fill: #17191d; }
-  #buzzer[data-on="true"] .bz-body { filter: drop-shadow(0 0 10px var(--alert)) drop-shadow(0 0 24px var(--alert)); }
-  #buzzer[data-on="true"] .bz-face { fill: url(#bz-lit); animation: bz-bright .3s ease-in-out infinite alternate; }
-  #buzzer[data-on="true"] .bz-ring { stroke: #ffd0d1; }
-  #buzzer[data-on="true"] .bz-hole { fill: #7a1114; }
-  #buzzer[data-on="true"] .bz-plus { fill: #fff; }
-  @keyframes bz-bright { from { filter: brightness(1); } to { filter: brightness(1.5); } }
+  /* IMU tilt dial */
+  .dial-face { fill: var(--panel); stroke: var(--accent); stroke-width: 2.5; }
+  .dial-hub { fill: var(--accent); }
+  .imu-needle { stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
+  .imu-state { font-size: 12px; font-weight: 650; fill: var(--accent); }
+
+  #paused[data-show="false"] { display: none; }
+  .paused-bg { fill: var(--panel); stroke: var(--line); }
+  .paused-text { font-size: 17px; font-weight: 750; letter-spacing: .08em; fill: var(--muted); }
 
   [data-state="buzz"] { --accent: var(--alert); }
   .card[data-state="buzz"] { background: color-mix(in srgb, var(--alert) 10%, var(--panel)); }
+  [data-state="walking"] { --accent: var(--far); }
+  [data-state="active"] { --accent: rgb(var(--beam)); }
+  [data-state="sitting"] { --accent: var(--muted); }
+  [data-state="missing"] { --accent: var(--very-close); }
+
+  .motor-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+  .motor-list li { display: flex; justify-content: space-between; font-size: 14px; }
+  .motor-list b { font-size: 12px; letter-spacing: .06em; color: var(--muted); }
+  .motor-list li[data-on="true"] b { color: var(--alert); }
 
   .cards { display: grid; gap: 14px; }
   @media (min-width: 700px) and (max-width: 999px) {
@@ -209,7 +228,7 @@
 <main>
   <div class="stage">
     <svg id="scene" class="offline" viewBox="0 0 1000 790" role="img"
-         aria-label="ESP32 with three ultrasonic sensors facing left, forward and right">
+         aria-label="ESP32 with three ultrasonic sensors facing left, forward and right, three vibration motors and an MPU6050">
       <defs>
         <radialGradient id="can" cx="40%" cy="35%" r="70%">
           <stop offset="0" stop-color="#fbfcfd"/>
@@ -229,24 +248,34 @@
           <stop offset="0" stop-color="#2c6fc1"/>
           <stop offset="1" stop-color="#1b4c8c"/>
         </linearGradient>
-        <radialGradient id="bz-lit" cx="45%" cy="40%" r="65%">
-          <stop offset="0" stop-color="#fff5f5"/>
-          <stop offset=".45" stop-color="#ff6b6e"/>
-          <stop offset="1" stop-color="#e5484d"/>
-        </radialGradient>
       </defs>
       <g id="esp32"></g>
       <g id="sensors"></g>
       <g id="wires"></g>
-      <g id="buzzer" data-on="false"></g>
+      <g id="motors"></g>
+      <g id="imu" class="imu" data-state="waiting"></g>
+      <g id="paused" data-show="false">
+        <rect class="paused-bg" x="320" y="8" width="360" height="38" rx="19"/>
+        <text class="paused-text" x="500" y="33" text-anchor="middle">PAUSED · WEARER IS SITTING</text>
+      </g>
     </svg>
   </div>
 
   <aside class="cards" id="cards">
-    <article class="card" id="card-buzzer" data-state="waiting">
-      <div class="card-head"><h2>Buzzer</h2><span class="badge">WAITING</span></div>
-      <p class="zone">Left &amp; Right: closer than 15 cm<br>Center: closer than 30 cm</p>
-      <p class="pins">+ leg to D13 · − leg to GND</p>
+    <article class="card" id="card-motors" data-state="waiting">
+      <div class="card-head"><h2>Vibration motors</h2><span class="badge">WAITING</span></div>
+      <ul class="motor-list">
+        <li data-motor="Left"><span>Left</span><b>--</b></li>
+        <li data-motor="Center"><span>Center</span><b>--</b></li>
+        <li data-motor="Right"><span>Right</span><b>--</b></li>
+      </ul>
+      <p class="pins">Left D13 · Center D33 · Right D4, each through an IRLZ44N</p>
+    </article>
+    <article class="card" id="card-imu" data-state="waiting">
+      <div class="card-head"><h2>IMU · MPU6050</h2><span class="badge">WAITING</span></div>
+      <div class="reading"><span class="num">--</span><span class="unit">° tilt</span></div>
+      <p class="zone">Waiting for IMU data…</p>
+      <p class="pins">Pauses after 5 s still and tilted over 20° · SDA D21 · SCL D22</p>
     </article>
     <section class="legend">
       <h2>Colours</h2>
@@ -257,7 +286,7 @@
         <li><span class="swatch" style="background: var(--far)"></span>Far: over 1.5 m</li>
         <li><span class="swatch" style="background: rgb(var(--beam))"></span>Clear: nothing in front</li>
       </ul>
-      <p>A flashing sensor is the one making the buzzer sound.</p>
+      <p>A flashing sensor is the one making its motor vibrate.</p>
     </section>
   </aside>
 </main>
@@ -269,6 +298,8 @@
   const TOO_CLOSE_CM = 15;
   const VERY_CLOSE_CM = 50;
   const CLOSE_CM = 150;
+  const STILL_MOTION_G = 0.03;
+  const WALK_MOTION_G = 0.08;
 
   // The drawn beam represents 0-2 m
   const MAX_CM = 200;
@@ -290,6 +321,7 @@
   const BOARD = { x: 432, y: 420, w: 136, h: 290 };
   const PIN_X_LEFT = 441, PIN_X_RIGHT = 559, PIN_Y0 = 452, PIN_STEP = 16;
   const pinY = name => PIN_Y0 + LEFT_PINS.indexOf(name) * PIN_STEP;
+  const rightPinY = name => PIN_Y0 + RIGHT_PINS.indexOf(name) * PIN_STEP;
 
   // Sensor pin -> ESP32 pin, with wire colour
   const sensorWires = s => [
@@ -432,37 +464,78 @@
       })).join("");
   }
 
-  // Active buzzer, below-left of the board: + leg to D13, - leg to GND
-  const BUZZER = { x: 370, y: 745, pin: "D13" };
-  function drawBuzzer() {
-    const { x, y } = BUZZER;
-    const legs = [
-      { dy: -6, to: BUZZER.pin, color: "#ec4899" },
-      { dy: 6,  to: "GND",      color: "#7c8594" },
-    ];
-    const wires = legs.map(l => {
-      const y1 = pinY(l.to);
-      return `<path class="wire" stroke="${l.color}"
-                    d="M${x + 24} ${y + l.dy} C${x + 60} ${y + l.dy}, ${PIN_X_LEFT - 40} ${y1}, ${PIN_X_LEFT} ${y1}"/>
-              <circle cx="${PIN_X_LEFT}" cy="${y1}" r="3.4" fill="${l.color}"/>`;
+  // Coin vibration motors, one per side, each switched by an IRLZ44N from its signal pin
+  const MOTORS = [
+    { name: "Left",   x: 330, y: 745, pin: "D13" },
+    { name: "Center", x: 360, y: 330, pin: "D33" },
+    { name: "Right",  x: 740, y: 745, pin: "D4" },
+  ];
+  function drawMotors() {
+    document.getElementById("motors").innerHTML = MOTORS.map(m => {
+      const onLeft = LEFT_PINS.includes(m.pin);
+      const [px, py] = onLeft ? [PIN_X_LEFT, pinY(m.pin)] : [PIN_X_RIGHT, rightPinY(m.pin)];
+      const dir = px > m.x ? 1 : -1;
+      const x0 = m.x + dir * 20;
+      const waves = [0, 0.15, 0.3].map(delay => `
+        <circle class="mt-wave" cx="${m.x}" cy="${m.y}" r="20">
+          <animate attributeName="r" from="20" to="44" dur="0.45s" begin="${delay}s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" from="1" to="0" dur="0.45s" begin="${delay}s" repeatCount="indefinite"/>
+        </circle>`).join("");
+      return `
+        <g class="motor" id="motor-${m.name}" data-on="false">
+          <path class="wire" stroke="#ec4899" d="M${x0} ${m.y} C${x0 + dir * 40} ${m.y}, ${px - dir * 40} ${py}, ${px} ${py}"/>
+          <circle cx="${px}" cy="${py}" r="3.4" fill="#ec4899"/>
+          <g class="mt-waves">${waves}</g>
+          <circle class="mt-glow" cx="${m.x}" cy="${m.y}" r="28"/>
+          <g class="mt-body">
+            <circle cx="${m.x}" cy="${m.y}" r="20" fill="url(#can)" stroke="#6b737d"/>
+            <circle cx="${m.x}" cy="${m.y}" r="14" fill="none" stroke="#9aa2ac" stroke-width="1"/>
+            <text x="${m.x}" y="${m.y + 3}" font-size="8" font-weight="700" fill="#4a5059" text-anchor="middle">3V</text>
+          </g>
+          <text class="name-label" x="${m.x}" y="${m.y + 38}" text-anchor="middle">MOTOR</text>
+        </g>`;
     }).join("");
-    const waves = [0, 0.2, 0.4].map(delay => `
-      <circle class="bz-wave" cx="${x}" cy="${y}" r="26">
-        <animate attributeName="r" from="26" to="60" dur="0.6s" begin="${delay}s" repeatCount="indefinite"/>
-        <animate attributeName="opacity" from="1" to="0" dur="0.6s" begin="${delay}s" repeatCount="indefinite"/>
-      </circle>`).join("");
+  }
 
-    document.getElementById("buzzer").innerHTML = `
+  // MPU6050 (GY-521 board), top right, wired to the ESP32's right header
+  const MPU = { x: 742, y: 214, w: 96, h: 64 };
+  const MPU_PINS = ["VCC", "GND", "SCL", "SDA", "XDA", "XCL", "AD0", "INT"];
+  const MPU_WIRES = [
+    { from: "VCC", to: "3V3", color: "#e5484d" },
+    { from: "GND", to: "GND", color: "#7c8594" },
+    { from: "SCL", to: "D22", color: "#a855f7" },
+    { from: "SDA", to: "D21", color: "#22c55e" },
+  ];
+  const DIAL = { x: MPU.x + MPU.w + 34, y: MPU.y + MPU.h / 2 };
+  function drawImu() {
+    const { x, y, w, h } = MPU;
+    const pinX = i => x + 13 + i * 10;
+    const pins = MPU_PINS.map((n, i) => `
+      <circle cx="${pinX(i)}" cy="${y + h - 7}" r="3" fill="#c9a648"/>
+      <text x="${pinX(i)}" y="${y + h - 13}" font-size="5" fill="#e8eef6" text-anchor="middle">${n}</text>`).join("");
+    // Down from the MPU, left above the right sensor, then down beside the ESP32
+    const wires = MPU_WIRES.map((wr, i) => {
+      const x0 = pinX(MPU_PINS.indexOf(wr.from)), y1 = rightPinY(wr.to);
+      const lane = 398 + i * 6, lx = 571 + i * 3;
+      return `<path class="wire" stroke="${wr.color}" stroke-linejoin="round"
+                    d="M${x0} ${y + h - 7} V${lane} H${lx} V${y1} H${PIN_X_RIGHT}"/>
+              <circle cx="${PIN_X_RIGHT}" cy="${y1}" r="3.4" fill="${wr.color}"/>`;
+    }).join("");
+
+    document.getElementById("imu").innerHTML = `
       ${wires}
-      <g class="bz-waves">${waves}</g>
-      <circle class="bz-glow" cx="${x}" cy="${y}" r="40"/>
-      <g class="bz-body">
-        <circle class="bz-face" cx="${x}" cy="${y}" r="24" stroke="#000"/>
-        <circle class="bz-ring" cx="${x}" cy="${y}" r="17" fill="none" stroke="#2f343b" stroke-width="2"/>
-        <circle class="bz-hole" cx="${x}" cy="${y}" r="4" fill="#050608"/>
-        <text class="bz-plus" x="${x - 14}" y="${y - 7}" font-size="10" font-weight="700" fill="#cfd5dc">+</text>
+      <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="5" fill="#2a3f8f" stroke="#18275e"/>
+      <text x="${x + 8}" y="${y + 12}" font-size="6.5" font-weight="700" fill="#e8eef6">GY-521</text>
+      <rect x="${x + w / 2 - 11}" y="${y + 12}" width="22" height="22" rx="2" fill="#111317"/>
+      <text x="${x + w / 2}" y="${y + 25}" font-size="4.6" fill="#8d96a3" text-anchor="middle">MPU-6050</text>
+      ${pins}
+      <text class="name-label" x="${x + w / 2}" y="${y - 10}" text-anchor="middle">IMU</text>
+      <g transform="translate(${DIAL.x} ${DIAL.y})">
+        <circle class="dial-face" r="24"/>
+        <line class="imu-needle" x1="0" y1="4" x2="0" y2="-19"/>
+        <circle class="dial-hub" r="3"/>
       </g>
-      <text class="name-label" x="${x - 34}" y="${y + 4}" text-anchor="end">BUZZER</text>`;
+      <text class="imu-state" x="${DIAL.x}" y="${DIAL.y + 42}" text-anchor="middle">--</text>`;
   }
 
   function cardMarkup(s) {
@@ -473,14 +546,15 @@
         <p class="zone"></p>
         <div class="meter"><i></i></div>
         <div class="scale"><span>0</span><span>1 m</span><span>2 m+</span></div>
-        <p class="pins">Buzzes under ${s.alertCm} cm · Trig ${s.trig} · Echo ${s.echo}</p>
+        <p class="pins">Vibrates under ${s.alertCm} cm · Trig ${s.trig} · Echo ${s.echo}</p>
       </article>`;
   }
 
   drawEsp32();
   document.getElementById("sensors").innerHTML = SENSORS.map(sensorMarkup).join("");
   drawWires();
-  drawBuzzer();
+  drawMotors();
+  drawImu();
   document.getElementById("cards").insertAdjacentHTML("afterbegin", SENSORS.map(cardMarkup).join(""));
 
   // Per-sensor view state; the drawn distance eases toward the latest reading
@@ -530,12 +604,13 @@
 
     const badge = alert
       ? "TOO CLOSE!"
-      : { ok: "OBJECT DETECTED", clear: "CLEAR", nosignal: "NO SIGNAL", waiting: "WAITING" }[state];
+      : { ok: "OBJECT DETECTED", clear: "CLEAR", nosignal: "NO SIGNAL", waiting: "WAITING", paused: "PAUSED" }[state];
     const zoneText = {
-      ok: zone && `${ZONE_TEXT[zone]}${alert ? ": buzzer on" : ""}${reading.cm > MAX_CM ? " (beyond the 2 m drawing)" : ""}`,
+      ok: zone && `${ZONE_TEXT[zone]}${alert ? ": motor on" : ""}${reading.cm > MAX_CM ? " (beyond the 2 m drawing)" : ""}`,
       clear: "Nothing in front within range",
       nosignal: "Sensor not answering: check its wires",
       waiting: "Waiting for a reading…",
+      paused: "Off while the wearer sits",
     }[state];
     v.card.querySelector(".badge").textContent = badge;
     v.card.querySelector(".num").textContent = state === "ok" ? reading.cm : "--";
@@ -548,19 +623,52 @@
     } else {
       v.targetPx = null;
       v.curPx = null;
-      v.label.textContent = { clear: "clear", nosignal: "no signal", waiting: "" }[state];
+      v.label.textContent = { clear: "clear", nosignal: "no signal", waiting: "", paused: "paused" }[state];
       placeLabel(v, state === "clear" ? BEAM_PX : 6);
     }
   }
 
-  const buzzerDrawing = document.getElementById("buzzer");
-  const buzzerCard = document.getElementById("card-buzzer");
-  // on: true / false from the firmware, or null when there's no live data
-  function showBuzzer(on) {
-    buzzerDrawing.dataset.on = on === true;
-    buzzerCard.dataset.state = on == null ? "waiting" : on ? "buzz" : "quiet";
-    buzzerCard.querySelector(".badge").textContent = on == null ? "WAITING" : on ? "ON" : "OFF";
+  const motorsCard = document.getElementById("card-motors");
+  // motors: {Left: true, ...} from the firmware, or null when there's no live data
+  function showMotors(motors) {
+    const any = motors && Object.values(motors).some(Boolean);
+    for (const m of MOTORS) {
+      const on = Boolean(motors && motors[m.name]);
+      document.getElementById(`motor-${m.name}`).dataset.on = on;
+      const row = motorsCard.querySelector(`[data-motor="${m.name}"]`);
+      row.dataset.on = on;
+      row.querySelector("b").textContent = motors ? (on ? "VIBRATING" : "off") : "--";
+    }
+    motorsCard.dataset.state = motors ? (any ? "buzz" : "quiet") : "waiting";
+    motorsCard.querySelector(".badge").textContent = motors ? (any ? "ON" : "OFF") : "WAITING";
   }
+
+  const imuDrawing = document.getElementById("imu");
+  const imuCard = document.getElementById("card-imu");
+  // imu: {found, tilt, motion} from the firmware, or null when there's no live data
+  function showImu(imu, sitting) {
+    let state, badge, text, short;
+    if (!imu) {
+      [state, badge, text, short] = ["waiting", "WAITING", "Waiting for IMU data…", "--"];
+    } else if (!imu.found) {
+      [state, badge, text, short] = ["missing", "NOT FOUND", "IMU not answering, so the belt stays on. Check VCC, GND, SDA and SCL.", "no IMU"];
+    } else if (sitting) {
+      [state, badge, text, short] = ["sitting", "SITTING · PAUSED", `Sensors and motors off · motion ${imu.motion.toFixed(3)} g`, "Sitting"];
+    } else {
+      short = imu.motion >= WALK_MOTION_G ? "Moving" : imu.motion >= STILL_MOTION_G ? "Moving a little" : "Still";
+      [state, badge, text] = [imu.motion >= WALK_MOTION_G ? "walking" : "active", "ACTIVE", `${short} · motion ${imu.motion.toFixed(3)} g`];
+    }
+    for (const el of [imuDrawing, imuCard]) el.dataset.state = state;
+    const tilt = imu && imu.found ? imu.tilt : null;
+    imuCard.querySelector(".badge").textContent = badge;
+    imuCard.querySelector(".num").textContent = tilt ?? "--";
+    imuCard.querySelector(".zone").textContent = text;
+    imuDrawing.querySelector(".imu-needle").setAttribute("transform", `rotate(${tilt ?? 0})`);
+    imuDrawing.querySelector(".imu-state").textContent = tilt == null ? short : `${short} · ${tilt}°`;
+  }
+
+  const pausedBanner = document.getElementById("paused");
+  const NO_MOTORS = { Left: false, Center: false, Right: false };
 
   const conn = document.getElementById("conn");
   const scene = document.getElementById("scene");
@@ -583,8 +691,14 @@
     } else {
       showConnection("live", `Live · ${snap.port}`);
     }
-    for (const v of Object.values(views)) showSensor(v, stale ? null : snap.sensors[v.s.name]);
-    showBuzzer(stale ? null : snap.buzzer);
+    const sitting = !stale && snap.sitting;
+    for (const v of Object.values(views)) {
+      showSensor(v, stale ? null : sitting ? { status: "paused" } : snap.sensors[v.s.name]);
+    }
+    const motors = Object.keys(snap.motors || {}).length ? snap.motors : null;
+    showMotors(stale ? null : sitting ? NO_MOTORS : motors);
+    showImu(stale ? null : snap.imu, sitting);
+    pausedBanner.dataset.show = sitting;
   };
   events.onerror = () => showConnection("down", "Live-view server stopped: start it again in the terminal");
 </script>

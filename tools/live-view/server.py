@@ -30,8 +30,15 @@ ESP32_USB_VIDS = {0x1A86, 0x10C4, 0x0403, 0x303A}
 #   "  Center    --      nothing in front"
 #   "  Right   NO SIGNAL - check this sensor's wires"
 SENSOR_LINE = re.compile(r"^\s+(Left|Center|Right)\s+(?:(\d+) cm|(--\s+nothing in front)|NO SIGNAL)")
-#   "  Buzzer  ON  - something closer than 15 cm!"  /  "  Buzzer  off"
-BUZZER_LINE = re.compile(r"^\s+Buzzer\s+(ON|off)")
+#   "  Motor   ON  - Left (<15 cm) Center (<30 cm)"  /  "  Motor   off"
+MOTOR_LINE = re.compile(r"^\s+Motor\s+(ON|off)(.*)")
+#   "  IMU     tilt   3 deg   motion 0.012 g   gravity  0.01 -0.02  1.00"
+#   "  IMU     NOT FOUND - belt stays on, check its wires"
+IMU_LINE = re.compile(r"^\s+IMU\s+(?:tilt\s+(\d+) deg\s+motion ([\d.]+) g"
+                      r"(?:\s+gravity\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+))?|NOT FOUND)")
+#   "--- wearer is sitting: sensors and motors paused ---"  /  "--- wearer is up: belt back on ---"
+SITTING_LINE = re.compile(r"^--- wearer is (sitting|up)")
+SENSOR_NAMES = ("Left", "Center", "Right")
 
 
 class LiveState:
@@ -41,7 +48,8 @@ class LiveState:
         self.cond = threading.Condition()
         self.version = 0
         self.snapshot = {
-            "connected": False, "port": None, "error": None, "sensors": {}, "buzzer": None, "updated": None,
+            "connected": False, "port": None, "error": None, "updated": None,
+            "sensors": {}, "motors": {}, "imu": None, "sitting": False,
         }
 
     def update(self, **changes):
@@ -49,11 +57,6 @@ class LiveState:
             self.snapshot = {**self.snapshot, **changes}
             self.version += 1
             self.cond.notify_all()
-
-    def set_sensor(self, name, reading):
-        with self.cond:
-            sensors = {**self.snapshot["sensors"], name: reading}
-        self.update(sensors=sensors, updated=time.time())
 
     def wait_for_change(self, seen_version, timeout):
         with self.cond:
@@ -68,16 +71,36 @@ def find_esp32_port():
     return None
 
 
-def parse_line(line):
+def parse_line(line, sensors):
+    """Returns the snapshot fields this line of firmware output changes, or None."""
     m = SENSOR_LINE.match(line)
-    if not m:
-        return None
-    name, cm, nothing = m.groups()
-    if cm is not None:
-        return name, {"status": "ok", "cm": int(cm)}
-    if nothing is not None:
-        return name, {"status": "clear"}
-    return name, {"status": "nosignal"}
+    if m:
+        name, cm, nothing = m.groups()
+        if cm is not None:
+            reading = {"status": "ok", "cm": int(cm)}
+        elif nothing is not None:
+            reading = {"status": "clear"}
+        else:
+            reading = {"status": "nosignal"}
+        return {"sensors": {**sensors, name: reading}, "sitting": False}
+    m = MOTOR_LINE.match(line)
+    if m:
+        on, which = m.group(1) == "ON", m.group(2)
+        return {"motors": {name: on and name in which for name in SENSOR_NAMES}}
+    m = IMU_LINE.match(line)
+    if m:
+        tilt, motion, *gravity = m.groups()
+        found = tilt is not None
+        return {"imu": {
+            "found": found,
+            "tilt": int(tilt) if found else None,
+            "motion": float(motion) if found else None,
+            "gravity": [float(g) for g in gravity] if gravity[0] is not None else None,
+        }}
+    m = SITTING_LINE.match(line)
+    if m:
+        return {"sitting": m.group(1) == "sitting"}
+    return None
 
 
 def read_serial_forever(state, port_arg, baud):
@@ -102,13 +125,9 @@ def read_serial_forever(state, port_arg, baud):
         try:
             with ser:
                 while True:
-                    line = ser.readline().decode(errors="replace")
-                    parsed = parse_line(line)
-                    buzzer = BUZZER_LINE.match(line)
-                    if parsed:
-                        state.set_sensor(*parsed)
-                    elif buzzer:
-                        state.update(buzzer=buzzer.group(1) == "ON", updated=time.time())
+                    changes = parse_line(ser.readline().decode(errors="replace"), state.snapshot["sensors"])
+                    if changes:
+                        state.update(**changes, updated=time.time())
         except (serial.SerialException, OSError):
             state.update(connected=False, error=f"Lost connection to {port} - was the USB cable unplugged?")
             time.sleep(1)

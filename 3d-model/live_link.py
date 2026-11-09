@@ -6,7 +6,14 @@ click Run Script to start; click it again to stop.
 
 Each sensor's beam stretches to the measured distance (to scale, up to 2 m),
 coloured like the web page, with the distance floating above the sensor.
-The buzzer glows and sends out rings while it is buzzing.
+Each vibration motor glows and sends out rings while it vibrates. The IMU's
+tilt and motion float above the MPU6050, and everything pauses while the
+wearer sits.
+
+The whole model also tilts the way the real breadboard tilts, using the
+MPU6050's gravity reading. Start the link with the breadboard flat and still:
+that position counts as level. Turning it flat on the table (around the
+vertical axis) can't be seen by an accelerometer, so only tilts are shown.
 """
 import json
 import math
@@ -15,15 +22,23 @@ import time
 import urllib.request
 
 import bpy
+from mathutils import Matrix, Quaternion, Vector
 
 URL = "http://localhost:8000/events"
 KEY = "belt_live_link"
 
-# Buzz distance per sensor, as in src/main.cpp
+# Vibrate distance per sensor, as in src/main.cpp; each sensor has its own motor
 ALERT_CM = {"Left": 15, "Center": 30, "Right": 15}
+STILL_MOTION_G = 0.03
+WALK_MOTION_G = 0.08
 MAX_CM = 200      # longest beam drawn
 CLEAR_CM = 30     # faint beam length when nothing is in front
 STALE_AFTER_S = 3
+
+ROOT = "Belt for Blind (mm)"
+# The sensor axis pointing up when the link starts is taken as up. If tilting the real breadboard
+# forward makes the model tilt sideways or backward, change this to 90, 180 or 270.
+TURN_SENSOR_DEG = 0
 
 
 def linear(hex_color):
@@ -41,7 +56,7 @@ COLORS = {
     "clear": linear("#5aa9ff"),
     "nosignal": linear("#8b95a3"),
 }
-BUZZER_RED = linear("#ff2a2a")
+MOTOR_RED = linear("#ff2a2a")
 
 
 def zone_of(cm):
@@ -100,7 +115,7 @@ def show_static_beams(visible):
 
 def live_objects():
     names = [f"Live beam {s}" for s in ALERT_CM] + [f"Live distance {s}" for s in ALERT_CM]
-    names += [f"Live buzzer ring {k}" for k in range(3)] + ["Live status"]
+    names += [f"Live motor ring {s} {k}" for s in ALERT_CM for k in range(3)] + ["Live status", "Live IMU"]
     return [o for o in (bpy.data.objects.get(n) for n in names) if o]
 
 
@@ -139,7 +154,8 @@ def update_sensor(state, name, reading, now):
     elif status == "clear":
         zone, target, body = "clear", CLEAR_CM * 10, "clear"
     else:
-        zone, target, body = "nosignal", None, "no signal" if status == "nosignal" else "--"
+        zone, target = "nosignal", None
+        body = {"nosignal": "no signal", "paused": "paused"}.get(status, "--")
 
     # Beam length in mm, easing toward the newest reading
     cur = state["lengths"].get(name)
@@ -156,7 +172,7 @@ def update_sensor(state, name, reading, now):
 
     pulse = 0.5 + 0.5 * math.sin(now * 12)
     rgb = COLORS[zone]
-    if alert:  # this sensor is making the buzzer sound: flash
+    if alert:  # this sensor is making its motor vibrate: flash
         set_color(side, rgb, alpha=0.2 + 0.35 * pulse, emission=0.8)
         set_color(cap, rgb, alpha=0.95, emission=0.6 + 1.6 * pulse)
     elif zone == "clear":
@@ -172,18 +188,63 @@ def update_sensor(state, name, reading, now):
     set_hidden(label, False)
 
 
-def update_buzzer(state, on, now):
-    body = bpy.data.materials["Buzzer body"]
+def update_motor(state, name, on, now):
+    top = bpy.data.materials[f"Motor top {name}"]
     if on:
-        set_color(body, BUZZER_RED, emission=0.8 + 1.6 * (0.5 + 0.5 * math.sin(now * 20)))
+        set_color(top, MOTOR_RED, emission=0.8 + 1.6 * (0.5 + 0.5 * math.sin(now * 20)))
     else:
-        set_color(body, state["buzzer_rgb"], emission=0.0)
+        set_color(top, state["motor_rgb"][name], emission=0.0)
     for k in range(3):
-        ring = bpy.data.objects[f"Live buzzer ring {k}"]
+        ring = bpy.data.objects[f"Live motor ring {name} {k}"]
         set_hidden(ring, not on)
         if on:
-            s = 1 + 2.6 * ((now * 1.7 + k / 3) % 1)
+            s = 1 + 2.2 * ((now * 2.2 + k / 3) % 1)
             ring.scale = (s, s, 1)
+
+
+def sensor_to_model(level):
+    """Rotation from the sensor's axes to the model's: the axis that is up at the start maps to up."""
+    k = max(range(3), key=lambda a: abs(level[a]))
+    sign = 1 if level[k] > 0 else -1
+    i, j = (k + 1) % 3, (k + 2) % 3
+    columns = [None] * 3  # where each sensor axis points in the model
+    columns[k], columns[i], columns[j] = Vector((0, 0, sign)), Vector((1, 0, 0)), Vector((0, sign, 0))
+    return Matrix.Rotation(math.radians(TURN_SENSOR_DEG), 3, "Z") @ Matrix(columns).transposed()
+
+
+def update_tilt(state, imu):
+    """Turn the model so it leans the way the real breadboard leans."""
+    gravity = imu and imu.get("gravity")
+    if not gravity or Vector(gravity).length < 0.5:
+        return
+    gravity = Vector(gravity).normalized()
+    if state["level"] is None:
+        state["level"] = gravity
+        state["sensor_to_model"] = sensor_to_model(gravity)
+    m = state["sensor_to_model"]
+    target = (m @ gravity).rotation_difference(m @ state["level"])
+    root = bpy.data.objects[ROOT]
+    current = root.rotation_quaternion.copy()
+    eased = current.slerp(target, 0.25)
+    if current.rotation_difference(eased).angle > math.radians(0.05):
+        root.rotation_quaternion = eased
+
+
+def update_imu(imu, sitting):
+    label = bpy.data.objects["Live IMU"]
+    if imu is None:
+        body, color = "IMU --", COLORS["nosignal"]
+    elif not imu["found"]:
+        body, color = "IMU not found", COLORS["very-close"]
+    elif sitting:
+        body, color = f"Sitting, paused · tilt {imu['tilt']}°", COLORS["nosignal"]
+    else:
+        moving = "moving" if imu["motion"] >= WALK_MOTION_G else "moving a little" if imu["motion"] >= STILL_MOTION_G else "still"
+        body, color = f"Tilt {imu['tilt']}° · {moving}", COLORS["far"] if moving == "moving" else COLORS["clear"]
+    if label.data.body != body:
+        label.data.body = body
+    set_color(bpy.data.materials["Live IMU text"], color, emission=0.5)
+    set_hidden(label, False)
 
 
 def tick():
@@ -195,12 +256,19 @@ def tick():
     live = (snap is not None and snap.get("connected") and snap.get("age") is not None
             and snap["age"] < STALE_AFTER_S and now - state["received"] < STALE_AFTER_S)
 
+    sitting = bool(live and snap.get("sitting"))
     for name in ALERT_CM:
-        update_sensor(state, name, snap["sensors"].get(name) if live else None, now)
-    update_buzzer(state, bool(live and snap.get("buzzer")), now)
+        reading = {"status": "paused"} if sitting else snap["sensors"].get(name) if live else None
+        update_sensor(state, name, reading, now)
+        update_motor(state, name, bool(live and not sitting and snap.get("motors", {}).get(name)), now)
+    update_imu(snap.get("imu") if live else None, sitting)
+    if live:
+        update_tilt(state, snap.get("imu"))
 
     status = bpy.data.objects["Live status"]
-    if live:
+    if sitting:
+        body = "PAUSED: wearer is sitting"
+    elif live:
         body = "LIVE"
     elif state["error"] is not None:
         body = "Start the live-view server (see README)"
@@ -223,11 +291,17 @@ def start():
     missing = [f"Live beam {s}" for s in ALERT_CM if f"Live beam {s}" not in bpy.data.objects]
     if missing:
         raise RuntimeError("This file has no live objects; rebuild it with build_model.py")
-    bsdf = next(n for n in bpy.data.materials["Buzzer body"].node_tree.nodes if n.type == "BSDF_PRINCIPLED")
+    motor_rgb = {}
+    for name in ALERT_CM:
+        bsdf = next(n for n in bpy.data.materials[f"Motor top {name}"].node_tree.nodes if n.type == "BSDF_PRINCIPLED")
+        motor_rgb[name] = tuple(bsdf.inputs["Base Color"].default_value[:3])
     state = {
         "stop": threading.Event(), "snap": None, "error": None, "received": 0.0, "lengths": {},
-        "buzzer_rgb": tuple(bsdf.inputs["Base Color"].default_value[:3]),
+        "motor_rgb": motor_rgb, "level": None,
     }
+    root = bpy.data.objects[ROOT]
+    root.rotation_mode = "QUATERNION"
+    root.rotation_quaternion = Quaternion()
     bpy.app.driver_namespace[KEY] = state
     threading.Thread(target=read_events, args=(state,), daemon=True).start()
     state["beams_were_visible"] = bool(static_beams() and not static_beams().hide_viewport)
@@ -241,8 +315,12 @@ def stop(state):
     state["stop"].set()
     for o in live_objects():
         o.hide_viewport = True
-    set_color(bpy.data.materials["Buzzer body"], state["buzzer_rgb"], emission=0.0)
+    for name, rgb in state["motor_rgb"].items():
+        set_color(bpy.data.materials[f"Motor top {name}"], rgb, emission=0.0)
     show_static_beams(state.get("beams_were_visible", False))
+    root = bpy.data.objects[ROOT]
+    root.rotation_quaternion = Quaternion()
+    root.rotation_mode = "XYZ"
     print("Live link stopped.")
 
 

@@ -11,16 +11,20 @@ first, and stop this server (Ctrl+C) before uploading new firmware.
 """
 import argparse
 import json
+import mimetypes
 import re
+import shutil
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 import serial
 from serial.tools import list_ports
 
 HERE = Path(__file__).parent
+MODEL_DIR = HERE.parents[1] / "3d-model"
 
 # USB-to-serial chips found on ESP32 boards: CH340, CP210x, FTDI, Espressif native USB
 ESP32_USB_VIDS = {0x1A86, 0x10C4, 0x0403, 0x303A}
@@ -136,21 +140,39 @@ def read_serial_forever(state, port_arg, baud):
 def make_handler(state):
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
-            if self.path in ("/", "/index.html"):
+            path = unquote(urlsplit(self.path).path)
+            if path in ("/", "/index.html"):
                 self.send_file(HERE / "index.html", "text/html; charset=utf-8")
-            elif self.path == "/events":
+            elif path == "/events":
                 self.stream_events()
+            elif path in ("/3d", "/3d/", "/3d.html"):
+                self.send_file(HERE / "3d.html", "text/html; charset=utf-8")
+            elif path == "/assets/workshop.hdr":
+                self.send_file(MODEL_DIR / "hdri/artist_workshop_4k.hdr", "application/octet-stream")
+            elif path in ("/3d.js", "/3d.css", "/orientation.js", "/live-state.js") or path.startswith(("/assets/", "/vendor/")):
+                file = (HERE / path.lstrip("/")).resolve()
+                if not file.is_relative_to(HERE.resolve()) or ".." in Path(path).parts:
+                    self.send_error(404)
+                    return
+                content_type = "text/javascript; charset=utf-8" if file.suffix == ".js" else mimetypes.guess_type(file)[0] or "application/octet-stream"
+                self.send_file(file, content_type)
             else:
                 self.send_error(404)
 
         def send_file(self, path, content_type):
-            body = path.read_bytes()
+            if not path.is_file():
+                self.send_error(404)
+                return
             self.send_response(200)
             self.send_header("Content-Type", content_type)
-            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Content-Length", str(path.stat().st_size))
             self.send_header("Cache-Control", "no-store")
             self.end_headers()
-            self.wfile.write(body)
+            try:
+                with path.open("rb") as body:
+                    shutil.copyfileobj(body, self.wfile)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
 
         def stream_events(self):
             self.send_response(200)
@@ -186,6 +208,7 @@ def main():
 
     server = ThreadingHTTPServer(("127.0.0.1", args.http_port), make_handler(state))
     print(f"Live view running: open http://localhost:{args.http_port}  (Ctrl+C to stop)")
+    print(f"Live 3D model: http://localhost:{args.http_port}/3d")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

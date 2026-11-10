@@ -77,6 +77,46 @@ A web page that draws the ESP32, the three sensors, the three vibration motors a
 
 Stop it with Ctrl+C before uploading new firmware.
 
+### Live 3D workspace
+
+With the same server running, open **http://localhost:8000/3d**. The original
+dashboard at `/` is unchanged. Both pages (and Blender) can be open together;
+only the server opens the USB port.
+
+The separate 3D page displays the actual exported Blender prototype, with its
+component geometry, wiring and printed labels, lit by the same Artist Workshop
+HDRI. Drag to orbit, scroll/pinch to zoom, and right-drag to pan. Use **Reset view**
+to return to the Blender camera, or **Full screen** for an immersive view.
+
+Keep the real board flat and still when opening the page. The first valid gravity
+reading becomes level, just as when running Blender's `live_link.py`. Moving the
+board then tilts the entire model with the same axis mapping and smoothing.
+**Set this position as level** recalibrates without changing your camera view.
+If forward tilt appears sideways, adjust **Sensor mounting** (0°, 90°, 180°, 270°).
+Like the Blender link, gravity-based orientation shows tilt, not rotation around
+the vertical axis. The current firmware must output `gravity x y z` in its IMU line.
+
+Sensor beams extend to the measured distances (capped visually at 2 m), motors
+glow and emit rings while active, and sitting pauses those effects. Old readings
+are cleared after 3 seconds without fresh data; the last orientation stays still.
+
+The Three.js renderer is included locally, so internet access and an open Blender
+window are not needed. If the optional HDRI is missing, the viewer uses studio
+lighting; install it with the download command in the Blender section below and
+reload. Browser lighting/materials approximate Blender's rendering: procedural
+microtextures and EEVEE reflections are not identical.
+
+After editing the Blender model, update the web asset with:
+```
+/Applications/Blender.app/Contents/MacOS/Blender -b 3d-model/belt_for_blind.blend -P 3d-model/export_web.py
+```
+This exports `tools/live-view/assets/belt_for_blind.glb` and `scene.json` without
+overwriting the `.blend`. It also copies `TURN_SENSOR_DEG` from `live_link.py`.
+To check the browser's orientation and live-state logic, run:
+```
+node --test tools/live-view/tests/*.test.mjs
+```
+
 ## 3D model (Blender)
 
 `3d-model/belt_for_blind.blend` is a to-scale model of the breadboard prototype. Rebuild it with:

@@ -1,0 +1,7 @@
+{
+  "name": "three",
+  "version": "0.180.0",
+  "type": "module",
+  "license": "MIT",
+  "exports": { ".": "./three.module.min.js", "./addons/*": "./addons/*" }
+}

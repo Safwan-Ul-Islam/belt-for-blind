@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f4ef">
+  <title>Belt for Blind · Live 3D</title>
+  <link rel="stylesheet" href="/3d.css">
+  <script type="importmap">{"imports":{"three":"/vendor/three/three.module.min.js","three/addons/":"/vendor/three/addons/"}}</script>
+</head>
+<body>
+  <header>
+    <a class="brand" href="/3d"><span class="brand-mark" aria-hidden="true">b.</span><span>Belt for Blind<small>THE LIVE PROTOTYPE</small></span></a>
+    <nav aria-label="View"><a href="/">Sensor dashboard <span aria-hidden="true">↗</span></a><span class="nav-current">3D workspace</span></nav>
+    <div id="connection" class="connection" data-state="waiting" role="status">Connecting…</div>
+  </header>
+  <main>
+    <section class="workspace" aria-label="Interactive live 3D model">
+      <div id="viewport" tabindex="0" aria-label="3D prototype. Drag to orbit, scroll to zoom, right drag to pan."></div>
+      <div class="vignette" aria-hidden="true"></div>
+      <div class="scene-heading"><p class="eyebrow">HARDWARE, IN REAL TIME</p><h1>A closer look.</h1><p>Your prototype. Every movement.</p></div>
+      <aside class="telemetry glass" aria-label="Live orientation">
+        <div class="telemetry-title"><span class="live-dot" id="imu-dot"></span>MPU6050 ORIENTATION</div>
+        <div class="tilt-value"><span id="tilt">—</span><span class="degree">°</span><span class="tilt-caption">tilt</span></div>
+        <div class="telemetry-row"><span>Motion</span><strong id="motion">— g</strong></div>
+        <div class="telemetry-row"><span>Wearer</span><strong id="wearer">Waiting</strong></div>
+        <p id="calibration">Place the board flat and still for the first reading.</p>
+        <button id="set-level" disabled>Set this position as level <span aria-hidden="true">↺</span></button>
+        <label class="axis-label" for="sensor-turn">Sensor mounting</label>
+        <select id="sensor-turn"><option value="0">0° · same as Blender</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select>
+      </aside>
+      <div class="view-controls glass" role="group" aria-label="3D view controls">
+        <button id="reset-view" title="Restore the Blender camera view">Reset view</button>
+        <button id="beams" aria-pressed="true">Sensor beams</button>
+        <button id="background" aria-pressed="true">Workshop</button>
+        <button id="fullscreen">Full screen</button>
+      </div>
+      <div class="loading glass" id="loading" role="status"><span class="loader"></span><strong id="loading-title">Opening your prototype</strong><span id="loading-detail">Loading the Blender model and workshop…</span></div>
+      <div class="scene-caption"><span id="environment-label">ARTIST WORKSHOP</span><span>Drag to orbit · Scroll to zoom · Right drag to pan</span></div>
+    </section>
+    <section class="sensor-strip" aria-label="Live distance sensors">
+      <article class="sensor-card" data-sensor="Left"><span class="sensor-index">01 / LEFT</span><div><strong class="distance">—</strong><span class="unit">cm</span></div><p><span class="sensor-status">Waiting for readings</span><span class="motor-status">Motor off</span></p></article>
+      <article class="sensor-card" data-sensor="Center"><span class="sensor-index">02 / CENTER</span><div><strong class="distance">—</strong><span class="unit">cm</span></div><p><span class="sensor-status">Waiting for readings</span><span class="motor-status">Motor off</span></p></article>
+      <article class="sensor-card" data-sensor="Right"><span class="sensor-index">03 / RIGHT</span><div><strong class="distance">—</strong><span class="unit">cm</span></div><p><span class="sensor-status">Waiting for readings</span><span class="motor-status">Motor off</span></p></article>
+      <aside class="connection-note"><span class="eyebrow">CONNECTED TO THE REAL WORLD</span><p id="live-detail" role="status">Waiting for the live server…</p><small>Live tilt follows the IMU, just like Blender.</small></aside>
+    </section>
+  </main>
+  <footer><span>ESP32 + 3 × HC-SR04 + MPU6050</span><span>Environment: <a href="https://polyhaven.com/a/artist_workshop" target="_blank" rel="noreferrer">Poly Haven</a> · CC0</span></footer>
+  <script type="module">
+    import('/3d.js').catch(error => {
+      document.querySelector('#loading-title').textContent = 'The 3D viewer could not start';
+      document.querySelector('#loading-detail').textContent = 'Reload the page. If this persists, enable WebGL in your browser. ' + error.message;
+      document.querySelector('.loader').hidden = true;
+    });
+  </script>
+</body>
+</html>

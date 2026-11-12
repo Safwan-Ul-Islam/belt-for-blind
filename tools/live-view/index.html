@@ -50,6 +50,9 @@
     border-bottom: 1px solid var(--line);
   }
   h1 { font-size: 18px; margin: 0; font-weight: 650; }
+  .views { display: flex; gap: 16px; margin-right: auto; font-size: 14px; }
+  .views a { color: var(--muted); text-decoration: none; }
+  .views a:hover { color: var(--ink); }
   .pill {
     display: inline-flex;
     align-items: center;
@@ -222,6 +225,7 @@
 <body>
 <header>
   <h1>Belt for Blind · Live sensors</h1>
+  <nav class="views"><a href="/">3D workspace</a><a href="/#wiring">Wiring</a></nav>
   <span id="conn" class="pill">Connecting…</span>
 </header>
 

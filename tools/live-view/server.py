@@ -25,6 +25,7 @@ from serial.tools import list_ports
 
 HERE = Path(__file__).parent
 MODEL_DIR = HERE.parents[1] / "3d-model"
+WIRING_IMAGE = HERE.parents[1] / "docs" / "wiring-pictorial.svg"  # made by tools/wiring/make_wiring_image.py
 
 # USB-to-serial chips found on ESP32 boards: CH340, CP210x, FTDI, Espressif native USB
 ESP32_USB_VIDS = {0x1A86, 0x10C4, 0x0403, 0x303A}
@@ -141,15 +142,17 @@ def make_handler(state):
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
             path = unquote(urlsplit(self.path).path)
-            if path in ("/", "/index.html"):
+            if path in ("/dashboard", "/dashboard/", "/index.html"):
                 self.send_file(HERE / "index.html", "text/html; charset=utf-8")
             elif path == "/events":
                 self.stream_events()
-            elif path in ("/3d", "/3d/", "/3d.html"):
+            elif path in ("/", "/3d", "/3d/", "/3d.html"):  # the 3D workspace with wiring is the home page
                 self.send_file(HERE / "3d.html", "text/html; charset=utf-8")
+            elif path == "/wiring.svg":
+                self.send_file(WIRING_IMAGE, "image/svg+xml")
             elif path == "/assets/workshop.hdr":
                 self.send_file(MODEL_DIR / "hdri/artist_workshop_4k.hdr", "application/octet-stream")
-            elif path in ("/3d.js", "/3d.css", "/orientation.js", "/live-state.js") or path.startswith(("/assets/", "/vendor/")):
+            elif path in ("/3d.js", "/3d.css", "/orientation.js", "/live-state.js", "/wiring.js") or path.startswith(("/assets/", "/vendor/")):
                 file = (HERE / path.lstrip("/")).resolve()
                 if not file.is_relative_to(HERE.resolve()) or ".." in Path(path).parts:
                     self.send_error(404)

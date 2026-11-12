@@ -4,6 +4,10 @@ ESP32 + 3 × HC-SR04 ultrasonic sensors, a vibration motor for alerts and an MPU
 
 ## Wiring
 
+![How to connect everything](docs/wiring-pictorial.png)
+
+There is also a [schematic version](docs/wiring-diagram.png).
+
 Pin names below are as printed on the ESP32 DevKit board (`D25` = GPIO 25). `VIN` gives 5V when the board is powered over USB.
 
 | Sensor | VCC | GND | TRIG | ECHO |
@@ -73,15 +77,20 @@ A web page that draws the ESP32, the three sensors, the three vibration motors a
    ```
    ~/.platformio/penv/bin/python tools/live-view/server.py
    ```
-3. Open http://localhost:8000
+3. Open http://localhost:8000: the live 3D workspace with the clickable **Wiring** section below it.
+   The 2D sensor dashboard is at http://localhost:8000/dashboard.
 
 Stop it with Ctrl+C before uploading new firmware.
 
 ### Live 3D workspace
 
-With the same server running, open **http://localhost:8000/3d**. The original
-dashboard at `/` is unchanged. Both pages (and Blender) can be open together;
-only the server opens the USB port.
+With the server running, **http://localhost:8000** opens the 3D workspace
+(`/3d` still works). The 2D dashboard is at `/dashboard`. Both pages (and Blender)
+can be open together; only the server opens the USB port.
+
+Below the 3D view, the **Wiring** section shows the realistic wiring picture. Click any part,
+pin, wire or 5V / 3V3 / GND tag: it lights up with everything it connects to, and the panel
+beside it lists each connection. Regenerate the picture with `python3 tools/wiring/make_wiring_image.py`.
 
 The separate 3D page displays the actual exported Blender prototype, with its
 component geometry, wiring and printed labels, lit by the same Artist Workshop

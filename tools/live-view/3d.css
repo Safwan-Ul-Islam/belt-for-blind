@@ -72,6 +72,32 @@ select { width: 100%; background: transparent; border: 1px solid var(--line); bo
 .connection-note .eyebrow { font-size: 8px; color: var(--green); letter-spacing: 1.1px; }
 .connection-note p { font-size: 11px; margin: 8px 0 5px; }
 .connection-note small { font-size: 10px; color: var(--muted); }
+.wiring { margin: 40px 0 10px; scroll-margin-top: 16px; }
+.wiring-heading h2 { margin: 6px 0 4px; font: 400 32px/1.2 Georgia, "Times New Roman", serif; letter-spacing: -1px; }
+.wiring-heading .eyebrow { color: var(--green); }
+.wiring-heading > p:last-child { margin: 0 0 18px; color: var(--muted); font-size: 13px; }
+.wiring-layout { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 20px; align-items: start; }
+.wiring-diagram { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 12px; color: var(--muted); min-height: 200px; }
+.wiring-diagram svg { display: block; width: 100%; height: auto; }
+.wiring-diagram [data-part] { cursor: pointer; transition: opacity .2s; outline: none; }
+.wiring-diagram [data-part]:hover, .wiring-diagram [data-part]:focus-visible { filter: drop-shadow(0 0 5px #38795e); }
+.wiring-diagram svg.choosing [data-part]:not(.chosen):not(.linked) { opacity: .22; }
+.wiring-diagram .chosen { filter: drop-shadow(0 0 4px #f59e0b) drop-shadow(0 0 10px #f59e0bcc); }
+.wiring-diagram .linked { filter: drop-shadow(0 0 4px #38795e) drop-shadow(0 0 8px #38795eaa); }
+.wiring-info { position: sticky; top: 16px; padding: 20px 22px; border: 1px solid var(--line); border-radius: 18px; background: #fbfbf7; }
+.wiring-info .eyebrow { color: var(--green); }
+.wiring-info h3 { margin: 6px 0 2px; font: 400 24px/1.25 Georgia, "Times New Roman", serif; letter-spacing: -.5px; }
+.wiring-info .kind { margin: 0 0 14px; color: var(--muted); font-size: 12px; }
+.wiring-info table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.wiring-info td { padding: 9px 0; border-top: 1px solid var(--line); vertical-align: top; }
+.wiring-info td:first-child { width: 42%; padding-right: 10px; color: var(--muted); }
+.wiring-info td:last-child { font-weight: 600; }
+.wiring-info .note { margin: 14px 0; padding: 10px 12px; border-radius: 10px; background: #e9f1ea; font-size: 12px; }
+.wiring-info .linked-title { margin: 14px 0 6px; font-size: 9px; font-weight: 650; letter-spacing: 1.4px; color: var(--muted); text-transform: uppercase; }
+.wiring-info .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.wiring-info .chips button { padding: 4px 10px; border: 1px solid var(--line); border-radius: 14px; background: #fff; font-size: 11px; }
+.wiring-info .chips button:hover { background: #dde7dc; }
+.wiring-info .clear { margin-top: 14px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 8px; background: transparent; font-size: 11px; color: var(--muted); }
 footer { display: flex; justify-content: space-between; gap: 16px; margin: 22px 32px 16px; font-size: 9px; color: #8a9185; }
 footer a { text-decoration: underline; text-underline-offset: 2px; }
 @media (max-width: 1000px) {
@@ -81,6 +107,8 @@ footer a { text-decoration: underline; text-underline-offset: 2px; }
   .connection-note { grid-column: 1/-1; padding: 16px 8px 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 16px; }
   .connection-note p { margin: 0; }
   .workspace { height: max(580px, calc(100svh - 310px)); }
+  .wiring-layout { grid-template-columns: 1fr; }
+  .wiring-info { position: static; }
 }
 @media (max-width: 640px) {
   header { min-height: 110px; padding: 14px 16px; flex-wrap: wrap; gap: 10px; }

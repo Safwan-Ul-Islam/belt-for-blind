@@ -32,8 +32,10 @@ class LiveViewTests(unittest.TestCase):
     def get(self, path):
         return urlopen(self.url + path, timeout=3)
 
-    def test_original_dashboard_is_served_unchanged(self):
+    def test_home_is_the_3d_workspace_and_dashboard_moved(self):
         with self.get("/") as response:
+            self.assertEqual(response.read(), (HERE / "3d.html").read_bytes())
+        with self.get("/dashboard") as response:
             self.assertEqual(response.read(), (HERE / "index.html").read_bytes())
 
     def test_separate_page_and_local_dependencies(self):
@@ -42,6 +44,7 @@ class LiveViewTests(unittest.TestCase):
             ("/3d?view=live", "text/html"), ("/3d.js", "text/javascript"),
             ("/orientation.js", "text/javascript"), ("/live-state.js", "text/javascript"),
             ("/3d.css", "text/css"), ("/assets/scene.json", "application/json"),
+            ("/wiring.js", "text/javascript"), ("/wiring.svg", "image/svg+xml"),
             ("/vendor/three/three.module.min.js", "text/javascript"),
             ("/vendor/three/three.core.min.js", "text/javascript"),
             ("/vendor/three/addons/loaders/GLTFLoader.js", "text/javascript"),

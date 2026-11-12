@@ -10,8 +10,8 @@
 </head>
 <body>
   <header>
-    <a class="brand" href="/3d"><span class="brand-mark" aria-hidden="true">b.</span><span>Belt for Blind<small>THE LIVE PROTOTYPE</small></span></a>
-    <nav aria-label="View"><a href="/">Sensor dashboard <span aria-hidden="true">↗</span></a><span class="nav-current">3D workspace</span></nav>
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">b.</span><span>Belt for Blind<small>THE LIVE PROTOTYPE</small></span></a>
+    <nav aria-label="View"><span class="nav-current">3D workspace</span><a href="#wiring">Wiring <span aria-hidden="true">↓</span></a><a href="/dashboard">Sensor dashboard <span aria-hidden="true">↗</span></a></nav>
     <div id="connection" class="connection" data-state="waiting" role="status">Connecting…</div>
   </header>
   <main>
@@ -44,8 +44,20 @@
       <article class="sensor-card" data-sensor="Right"><span class="sensor-index">03 / RIGHT</span><div><strong class="distance">—</strong><span class="unit">cm</span></div><p><span class="sensor-status">Waiting for readings</span><span class="motor-status">Motor off</span></p></article>
       <aside class="connection-note"><span class="eyebrow">CONNECTED TO THE REAL WORLD</span><p id="live-detail" role="status">Waiting for the live server…</p><small>Live tilt follows the IMU, just like Blender.</small></aside>
     </section>
+    <section class="wiring" id="wiring" aria-labelledby="wiring-title">
+      <div class="wiring-heading">
+        <p class="eyebrow">HOW EVERYTHING IS CONNECTED</p>
+        <h2 id="wiring-title">Wiring</h2>
+        <p>Click any part, pin, wire or tag. Its connections appear beside the picture, and everything it connects to lights up.</p>
+      </div>
+      <div class="wiring-layout">
+        <div class="wiring-diagram" id="wiring-diagram">Loading the wiring…</div>
+        <aside class="wiring-info" id="wiring-info" aria-live="polite"></aside>
+      </div>
+    </section>
   </main>
   <footer><span>ESP32 + 3 × HC-SR04 + MPU6050</span><span>Environment: <a href="https://polyhaven.com/a/artist_workshop" target="_blank" rel="noreferrer">Poly Haven</a> · CC0</span></footer>
+  <script type="module" src="/wiring.js"></script>
   <script type="module">
     import('/3d.js').catch(error => {
       document.querySelector('#loading-title').textContent = 'The 3D viewer could not start';

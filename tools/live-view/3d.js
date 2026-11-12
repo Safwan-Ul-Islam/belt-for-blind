@@ -166,6 +166,7 @@ function updateStatus(live) {
   $('#set-level').disabled = !hasGravity;
   $('#imu-dot').classList.toggle('active', hasGravity);
   $('#tilt').textContent = imu?.found ? imu.tilt : '—';
+  $('#tilt-mini').textContent = imu?.found ? imu.tilt : '—';
   $('#motion').textContent = imu?.found ? `${imu.motion.toFixed(3)} g` : '— g';
   $('#wearer').textContent = !live ? 'Waiting' : snapshot.sitting ? 'Sitting · paused' : imu?.found ? imu.motion >= 0.08 ? 'Moving' : 'Active' : 'IMU missing';
   $('#calibration').textContent = !live ? 'Place the board flat and still for the first reading.' : !imu?.found ? 'IMU not found. Check the MPU6050 connection.' : !hasGravity ? 'No gravity readings. Upload the current firmware to enable live tilt.' : orientation.level ? 'Level is set. Tilt the real board to move the model.' : 'Hold the board still. Setting level…';

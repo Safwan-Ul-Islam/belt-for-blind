@@ -40,6 +40,9 @@ class LiveViewTests(unittest.TestCase):
 
     def test_separate_page_and_local_dependencies(self):
         for path, mime in (
+            ("/vero", "text/html"), ("/belt/", "text/html"),
+            ("/customizer.js", "text/javascript"), ("/customizer.css", "text/css"),
+            ("/layout-model.js", "text/javascript"), ("/assets/customizer.json", "application/json"),
             ("/3d", "text/html"), ("/3d/", "text/html"), ("/3d.html", "text/html"),
             ("/3d?view=live", "text/html"), ("/3d.js", "text/javascript"),
             ("/orientation.js", "text/javascript"), ("/live-state.js", "text/javascript"),

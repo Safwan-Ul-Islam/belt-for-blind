@@ -148,11 +148,13 @@ def make_handler(state):
                 self.stream_events()
             elif path in ("/", "/3d", "/3d/", "/3d.html"):  # the 3D workspace with wiring is the home page
                 self.send_file(HERE / "3d.html", "text/html; charset=utf-8")
+            elif path.rstrip("/") in ("/vero", "/belt"):
+                self.send_file(HERE / "customizer.html", "text/html; charset=utf-8")
             elif path == "/wiring.svg":
                 self.send_file(WIRING_IMAGE, "image/svg+xml")
             elif path == "/assets/workshop.hdr":
                 self.send_file(MODEL_DIR / "hdri/artist_workshop_4k.hdr", "application/octet-stream")
-            elif path in ("/3d.js", "/3d.css", "/orientation.js", "/live-state.js", "/wiring.js") or path.startswith(("/assets/", "/vendor/")):
+            elif path in ("/3d.js", "/3d.css", "/orientation.js", "/live-state.js", "/wiring.js", "/customizer.js", "/customizer.css", "/layout-model.js") or path.startswith(("/assets/", "/vendor/")):
                 file = (HERE / path.lstrip("/")).resolve()
                 if not file.is_relative_to(HERE.resolve()) or ".." in Path(path).parts:
                     self.send_error(404)
@@ -204,10 +206,12 @@ def main():
     parser.add_argument("--port", help="serial port (default: auto-detect the ESP32)")
     parser.add_argument("--baud", type=int, default=115200)
     parser.add_argument("--http-port", type=int, default=8000)
+    parser.add_argument("--no-serial", action="store_true", help="open the design editors without accessing USB")
     args = parser.parse_args()
 
     state = LiveState()
-    threading.Thread(target=read_serial_forever, args=(state, args.port, args.baud), daemon=True).start()
+    if not args.no_serial:
+        threading.Thread(target=read_serial_forever, args=(state, args.port, args.baud), daemon=True).start()
 
     server = ThreadingHTTPServer(("127.0.0.1", args.http_port), make_handler(state))
     print(f"Live view running: open http://localhost:{args.http_port}  (Ctrl+C to stop)")

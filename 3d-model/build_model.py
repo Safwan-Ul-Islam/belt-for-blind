@@ -872,4 +872,5 @@ def main():
         print(f"Preview {preview}")
 
 
-main()
+if __name__ == "__main__":
+    main()

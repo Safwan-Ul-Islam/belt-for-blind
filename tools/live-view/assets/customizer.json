@@ -1,0 +1,2403 @@
+{
+  "types": {
+    "esp32": {
+      "label": "ESP32 DevKit",
+      "pins": {
+        "EN": [
+          17.78,
+          12.7,
+          2.6
+        ],
+        "VP": [
+          15.24,
+          12.7,
+          2.6
+        ],
+        "VN": [
+          12.7,
+          12.7,
+          2.6
+        ],
+        "D34": [
+          10.16,
+          12.7,
+          2.6
+        ],
+        "D35": [
+          7.62,
+          12.7,
+          2.6
+        ],
+        "D32": [
+          5.08,
+          12.7,
+          2.6
+        ],
+        "D33": [
+          2.54,
+          12.7,
+          2.6
+        ],
+        "D25": [
+          0.0,
+          12.7,
+          2.6
+        ],
+        "D26": [
+          -2.54,
+          12.7,
+          2.6
+        ],
+        "D27": [
+          -5.08,
+          12.7,
+          2.6
+        ],
+        "D14": [
+          -7.62,
+          12.7,
+          2.6
+        ],
+        "D12": [
+          -10.16,
+          12.7,
+          2.6
+        ],
+        "D13": [
+          -12.7,
+          12.7,
+          2.6
+        ],
+        "GND": [
+          -15.24,
+          12.7,
+          2.6
+        ],
+        "VIN": [
+          -17.78,
+          12.7,
+          2.6
+        ],
+        "D23": [
+          17.78,
+          -12.7,
+          2.6
+        ],
+        "D22": [
+          15.24,
+          -12.7,
+          2.6
+        ],
+        "TX0": [
+          12.7,
+          -12.7,
+          2.6
+        ],
+        "RX0": [
+          10.16,
+          -12.7,
+          2.6
+        ],
+        "D21": [
+          7.62,
+          -12.7,
+          2.6
+        ],
+        "D19": [
+          5.08,
+          -12.7,
+          2.6
+        ],
+        "D18": [
+          2.54,
+          -12.7,
+          2.6
+        ],
+        "D5": [
+          0.0,
+          -12.7,
+          2.6
+        ],
+        "TX2": [
+          -2.54,
+          -12.7,
+          2.6
+        ],
+        "RX2": [
+          -5.08,
+          -12.7,
+          2.6
+        ],
+        "D4": [
+          -7.62,
+          -12.7,
+          2.6
+        ],
+        "D2": [
+          -10.16,
+          -12.7,
+          2.6
+        ],
+        "D15": [
+          -12.7,
+          -12.7,
+          2.6
+        ],
+        "GND2": [
+          -15.24,
+          -12.7,
+          2.6
+        ],
+        "3V3": [
+          -17.78,
+          -12.7,
+          2.6
+        ]
+      }
+    },
+    "sensor": {
+      "label": "HC-SR04",
+      "pins": {
+        "VCC": [
+          3.81,
+          11.25,
+          3
+        ],
+        "Trig": [
+          1.27,
+          11.25,
+          3
+        ],
+        "Echo": [
+          -1.27,
+          11.25,
+          3
+        ],
+        "GND": [
+          -3.81,
+          11.25,
+          3
+        ]
+      }
+    },
+    "motor": {
+      "label": "3V coin motor",
+      "pins": {
+        "+": [
+          4.6,
+          1,
+          1.2
+        ],
+        "-": [
+          4.6,
+          -1,
+          1.2
+        ]
+      }
+    },
+    "mosfet": {
+      "label": "IRLZ44N driver",
+      "pins": {
+        "G": [
+          -2.54,
+          0,
+          1
+        ],
+        "D": [
+          0,
+          0,
+          1
+        ],
+        "S": [
+          2.54,
+          0,
+          1
+        ]
+      }
+    },
+    "imu": {
+      "label": "MPU6050 / GY-521",
+      "pins": {
+        "VCC": [
+          -8.89,
+          -6,
+          3
+        ],
+        "GND": [
+          -6.35,
+          -6,
+          3
+        ],
+        "SCL": [
+          -3.81,
+          -6,
+          3
+        ],
+        "SDA": [
+          -1.27,
+          -6,
+          3
+        ],
+        "XDA": [
+          1.27,
+          -6,
+          3
+        ],
+        "XCL": [
+          3.81,
+          -6,
+          3
+        ],
+        "AD0": [
+          6.35,
+          -6,
+          3
+        ],
+        "INT": [
+          8.89,
+          -6,
+          3
+        ]
+      }
+    },
+    "r1k": {
+      "label": "1k\u03a9",
+      "pins": {
+        "A": [
+          -6.35,
+          0,
+          2
+        ],
+        "B": [
+          6.35,
+          0,
+          2
+        ]
+      }
+    },
+    "r2k": {
+      "label": "2k\u03a9",
+      "pins": {
+        "A": [
+          -6.35,
+          0,
+          2
+        ],
+        "B": [
+          6.35,
+          0,
+          2
+        ]
+      }
+    },
+    "r220": {
+      "label": "220\u03a9",
+      "pins": {
+        "A": [
+          -6.35,
+          0,
+          2
+        ],
+        "B": [
+          6.35,
+          0,
+          2
+        ]
+      }
+    },
+    "r10k": {
+      "label": "10k\u03a9",
+      "pins": {
+        "A": [
+          -6.35,
+          0,
+          2
+        ],
+        "B": [
+          6.35,
+          0,
+          2
+        ]
+      }
+    },
+    "diode": {
+      "label": "1N4007",
+      "pins": {
+        "A": [
+          -6.35,
+          0,
+          2
+        ],
+        "K": [
+          6.35,
+          0,
+          2
+        ]
+      }
+    },
+    "vero": {
+      "label": "Vero board",
+      "pins": {}
+    },
+    "belt": {
+      "label": "Woven belt",
+      "pins": {}
+    }
+  },
+  "defaults": {
+    "vero": {
+      "version": 1,
+      "mode": "vero",
+      "belt": {
+        "rx": 170,
+        "ry": 135,
+        "width": 50
+      },
+      "components": [
+        {
+          "id": "esp",
+          "type": "esp32",
+          "label": "ESP32 DevKit",
+          "x": -35,
+          "y": 12,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "imu",
+          "type": "imu",
+          "label": "MPU6050",
+          "x": 36,
+          "y": 12,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "sensor-left",
+          "type": "sensor",
+          "label": "Left sensor",
+          "x": -55,
+          "y": 40,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "motor-left",
+          "type": "motor",
+          "label": "Left motor",
+          "x": -55,
+          "y": -48,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "q-left",
+          "type": "mosfet",
+          "label": "Left MOSFET",
+          "x": -55,
+          "y": -20,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r1k-left",
+          "type": "r1k",
+          "label": "Left 1k\u03a9",
+          "x": -67,
+          "y": 0,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r2k-left",
+          "type": "r2k",
+          "label": "Left 2k\u03a9",
+          "x": -43,
+          "y": 0,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r220-left",
+          "type": "r220",
+          "label": "Left 220\u03a9",
+          "x": -68,
+          "y": -31,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r10k-left",
+          "type": "r10k",
+          "label": "Left 10k\u03a9",
+          "x": -42,
+          "y": -31,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "diode-left",
+          "type": "diode",
+          "label": "Left 1N4007",
+          "x": -37,
+          "y": -46,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "sensor-center",
+          "type": "sensor",
+          "label": "Center sensor",
+          "x": 0,
+          "y": 40,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "motor-center",
+          "type": "motor",
+          "label": "Center motor",
+          "x": 0,
+          "y": -48,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "q-center",
+          "type": "mosfet",
+          "label": "Center MOSFET",
+          "x": 0,
+          "y": -20,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r1k-center",
+          "type": "r1k",
+          "label": "Center 1k\u03a9",
+          "x": -12,
+          "y": 0,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r2k-center",
+          "type": "r2k",
+          "label": "Center 2k\u03a9",
+          "x": 12,
+          "y": 0,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r220-center",
+          "type": "r220",
+          "label": "Center 220\u03a9",
+          "x": -13,
+          "y": -31,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r10k-center",
+          "type": "r10k",
+          "label": "Center 10k\u03a9",
+          "x": 13,
+          "y": -31,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "diode-center",
+          "type": "diode",
+          "label": "Center 1N4007",
+          "x": 18,
+          "y": -46,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "sensor-right",
+          "type": "sensor",
+          "label": "Right sensor",
+          "x": 55,
+          "y": 40,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "motor-right",
+          "type": "motor",
+          "label": "Right motor",
+          "x": 55,
+          "y": -48,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "q-right",
+          "type": "mosfet",
+          "label": "Right MOSFET",
+          "x": 55,
+          "y": -20,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r1k-right",
+          "type": "r1k",
+          "label": "Right 1k\u03a9",
+          "x": 43,
+          "y": 0,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r2k-right",
+          "type": "r2k",
+          "label": "Right 2k\u03a9",
+          "x": 67,
+          "y": 0,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r220-right",
+          "type": "r220",
+          "label": "Right 220\u03a9",
+          "x": 42,
+          "y": -31,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r10k-right",
+          "type": "r10k",
+          "label": "Right 10k\u03a9",
+          "x": 68,
+          "y": -31,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "diode-right",
+          "type": "diode",
+          "label": "Right 1N4007",
+          "x": 73,
+          "y": -46,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        }
+      ],
+      "wires": [
+        {
+          "id": "w1",
+          "from": {
+            "component": "esp",
+            "pin": "VIN"
+          },
+          "to": {
+            "component": "sensor-left",
+            "pin": "VCC"
+          },
+          "color": "#d45446",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w2",
+          "from": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "to": {
+            "component": "sensor-left",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w3",
+          "from": {
+            "component": "esp",
+            "pin": "D25"
+          },
+          "to": {
+            "component": "sensor-left",
+            "pin": "Trig"
+          },
+          "color": "#d1a52c",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w4",
+          "from": {
+            "component": "sensor-left",
+            "pin": "Echo"
+          },
+          "to": {
+            "component": "r1k-left",
+            "pin": "A"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w5",
+          "from": {
+            "component": "r1k-left",
+            "pin": "B"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "D34"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w6",
+          "from": {
+            "component": "r1k-left",
+            "pin": "B"
+          },
+          "to": {
+            "component": "r2k-left",
+            "pin": "A"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w7",
+          "from": {
+            "component": "r2k-left",
+            "pin": "B"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w8",
+          "from": {
+            "component": "esp",
+            "pin": "D13"
+          },
+          "to": {
+            "component": "r220-left",
+            "pin": "A"
+          },
+          "color": "#4a9d78",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w9",
+          "from": {
+            "component": "r220-left",
+            "pin": "B"
+          },
+          "to": {
+            "component": "q-left",
+            "pin": "G"
+          },
+          "color": "#4a9d78",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w10",
+          "from": {
+            "component": "q-left",
+            "pin": "G"
+          },
+          "to": {
+            "component": "r10k-left",
+            "pin": "A"
+          },
+          "color": "#4a9d78",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w11",
+          "from": {
+            "component": "r10k-left",
+            "pin": "B"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w12",
+          "from": {
+            "component": "q-left",
+            "pin": "S"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w13",
+          "from": {
+            "component": "q-left",
+            "pin": "D"
+          },
+          "to": {
+            "component": "motor-left",
+            "pin": "-"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w14",
+          "from": {
+            "component": "esp",
+            "pin": "3V3"
+          },
+          "to": {
+            "component": "motor-left",
+            "pin": "+"
+          },
+          "color": "#d45446",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w15",
+          "from": {
+            "component": "motor-left",
+            "pin": "+"
+          },
+          "to": {
+            "component": "diode-left",
+            "pin": "K"
+          },
+          "color": "#d45446",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w16",
+          "from": {
+            "component": "motor-left",
+            "pin": "-"
+          },
+          "to": {
+            "component": "diode-left",
+            "pin": "A"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w17",
+          "from": {
+            "component": "esp",
+            "pin": "VIN"
+          },
+          "to": {
+            "component": "sensor-center",
+            "pin": "VCC"
+          },
+          "color": "#d45446",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w18",
+          "from": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "to": {
+            "component": "sensor-center",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w19",
+          "from": {
+            "component": "esp",
+            "pin": "D26"
+          },
+          "to": {
+            "component": "sensor-center",
+            "pin": "Trig"
+          },
+          "color": "#d1a52c",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w20",
+          "from": {
+            "component": "sensor-center",
+            "pin": "Echo"
+          },
+          "to": {
+            "component": "r1k-center",
+            "pin": "A"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w21",
+          "from": {
+            "component": "r1k-center",
+            "pin": "B"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "D35"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w22",
+          "from": {
+            "component": "r1k-center",
+            "pin": "B"
+          },
+          "to": {
+            "component": "r2k-center",
+            "pin": "A"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w23",
+          "from": {
+            "component": "r2k-center",
+            "pin": "B"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w24",
+          "from": {
+            "component": "esp",
+            "pin": "D33"
+          },
+          "to": {
+            "component": "r220-center",
+            "pin": "A"
+          },
+          "color": "#4a9d78",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w25",
+          "from": {
+            "component": "r220-center",
+            "pin": "B"
+          },
+          "to": {
+            "component": "q-center",
+            "pin": "G"
+          },
+          "color": "#4a9d78",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w26",
+          "from": {
+            "component": "q-center",
+            "pin": "G"
+          },
+          "to": {
+            "component": "r10k-center",
+            "pin": "A"
+          },
+          "color": "#4a9d78",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w27",
+          "from": {
+            "component": "r10k-center",
+            "pin": "B"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w28",
+          "from": {
+            "component": "q-center",
+            "pin": "S"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w29",
+          "from": {
+            "component": "q-center",
+            "pin": "D"
+          },
+          "to": {
+            "component": "motor-center",
+            "pin": "-"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w30",
+          "from": {
+            "component": "esp",
+            "pin": "3V3"
+          },
+          "to": {
+            "component": "motor-center",
+            "pin": "+"
+          },
+          "color": "#d45446",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w31",
+          "from": {
+            "component": "motor-center",
+            "pin": "+"
+          },
+          "to": {
+            "component": "diode-center",
+            "pin": "K"
+          },
+          "color": "#d45446",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w32",
+          "from": {
+            "component": "motor-center",
+            "pin": "-"
+          },
+          "to": {
+            "component": "diode-center",
+            "pin": "A"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w33",
+          "from": {
+            "component": "esp",
+            "pin": "VIN"
+          },
+          "to": {
+            "component": "sensor-right",
+            "pin": "VCC"
+          },
+          "color": "#d45446",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w34",
+          "from": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "to": {
+            "component": "sensor-right",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w35",
+          "from": {
+            "component": "esp",
+            "pin": "D27"
+          },
+          "to": {
+            "component": "sensor-right",
+            "pin": "Trig"
+          },
+          "color": "#d1a52c",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w36",
+          "from": {
+            "component": "sensor-right",
+            "pin": "Echo"
+          },
+          "to": {
+            "component": "r1k-right",
+            "pin": "A"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w37",
+          "from": {
+            "component": "r1k-right",
+            "pin": "B"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "D32"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w38",
+          "from": {
+            "component": "r1k-right",
+            "pin": "B"
+          },
+          "to": {
+            "component": "r2k-right",
+            "pin": "A"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w39",
+          "from": {
+            "component": "r2k-right",
+            "pin": "B"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w40",
+          "from": {
+            "component": "esp",
+            "pin": "D4"
+          },
+          "to": {
+            "component": "r220-right",
+            "pin": "A"
+          },
+          "color": "#4a9d78",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w41",
+          "from": {
+            "component": "r220-right",
+            "pin": "B"
+          },
+          "to": {
+            "component": "q-right",
+            "pin": "G"
+          },
+          "color": "#4a9d78",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w42",
+          "from": {
+            "component": "q-right",
+            "pin": "G"
+          },
+          "to": {
+            "component": "r10k-right",
+            "pin": "A"
+          },
+          "color": "#4a9d78",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w43",
+          "from": {
+            "component": "r10k-right",
+            "pin": "B"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w44",
+          "from": {
+            "component": "q-right",
+            "pin": "S"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w45",
+          "from": {
+            "component": "q-right",
+            "pin": "D"
+          },
+          "to": {
+            "component": "motor-right",
+            "pin": "-"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w46",
+          "from": {
+            "component": "esp",
+            "pin": "3V3"
+          },
+          "to": {
+            "component": "motor-right",
+            "pin": "+"
+          },
+          "color": "#d45446",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w47",
+          "from": {
+            "component": "motor-right",
+            "pin": "+"
+          },
+          "to": {
+            "component": "diode-right",
+            "pin": "K"
+          },
+          "color": "#d45446",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w48",
+          "from": {
+            "component": "motor-right",
+            "pin": "-"
+          },
+          "to": {
+            "component": "diode-right",
+            "pin": "A"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w49",
+          "from": {
+            "component": "esp",
+            "pin": "3V3"
+          },
+          "to": {
+            "component": "imu",
+            "pin": "VCC"
+          },
+          "color": "#d45446",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w50",
+          "from": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "to": {
+            "component": "imu",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w51",
+          "from": {
+            "component": "esp",
+            "pin": "D21"
+          },
+          "to": {
+            "component": "imu",
+            "pin": "SDA"
+          },
+          "color": "#4a9d78",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w52",
+          "from": {
+            "component": "esp",
+            "pin": "D22"
+          },
+          "to": {
+            "component": "imu",
+            "pin": "SCL"
+          },
+          "color": "#d1a52c",
+          "slack": 7,
+          "via": null
+        }
+      ]
+    },
+    "belt": {
+      "version": 1,
+      "mode": "belt",
+      "belt": {
+        "rx": 170,
+        "ry": 135,
+        "width": 50
+      },
+      "components": [
+        {
+          "id": "esp",
+          "type": "esp32",
+          "label": "ESP32 DevKit",
+          "x": -35,
+          "y": 12,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "imu",
+          "type": "imu",
+          "label": "MPU6050",
+          "x": 36,
+          "y": 12,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "sensor-left",
+          "type": "sensor",
+          "label": "Left sensor",
+          "x": -55,
+          "y": 5,
+          "z": 5,
+          "rotation": 0,
+          "surface": "belt",
+          "angle": -65
+        },
+        {
+          "id": "motor-left",
+          "type": "motor",
+          "label": "Left motor",
+          "x": -55,
+          "y": -14,
+          "z": 5,
+          "rotation": 0,
+          "surface": "belt",
+          "angle": -50
+        },
+        {
+          "id": "q-left",
+          "type": "mosfet",
+          "label": "Left MOSFET",
+          "x": -55,
+          "y": -20,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r1k-left",
+          "type": "r1k",
+          "label": "Left 1k\u03a9",
+          "x": -67,
+          "y": 0,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r2k-left",
+          "type": "r2k",
+          "label": "Left 2k\u03a9",
+          "x": -43,
+          "y": 0,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r220-left",
+          "type": "r220",
+          "label": "Left 220\u03a9",
+          "x": -68,
+          "y": -31,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r10k-left",
+          "type": "r10k",
+          "label": "Left 10k\u03a9",
+          "x": -42,
+          "y": -31,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "diode-left",
+          "type": "diode",
+          "label": "Left 1N4007",
+          "x": -37,
+          "y": -46,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "sensor-center",
+          "type": "sensor",
+          "label": "Center sensor",
+          "x": 0,
+          "y": 5,
+          "z": 5,
+          "rotation": 0,
+          "surface": "belt",
+          "angle": 0
+        },
+        {
+          "id": "motor-center",
+          "type": "motor",
+          "label": "Center motor",
+          "x": 0,
+          "y": -14,
+          "z": 5,
+          "rotation": 0,
+          "surface": "belt",
+          "angle": 15
+        },
+        {
+          "id": "q-center",
+          "type": "mosfet",
+          "label": "Center MOSFET",
+          "x": 0,
+          "y": -20,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r1k-center",
+          "type": "r1k",
+          "label": "Center 1k\u03a9",
+          "x": -12,
+          "y": 0,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r2k-center",
+          "type": "r2k",
+          "label": "Center 2k\u03a9",
+          "x": 12,
+          "y": 0,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r220-center",
+          "type": "r220",
+          "label": "Center 220\u03a9",
+          "x": -13,
+          "y": -31,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r10k-center",
+          "type": "r10k",
+          "label": "Center 10k\u03a9",
+          "x": 13,
+          "y": -31,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "diode-center",
+          "type": "diode",
+          "label": "Center 1N4007",
+          "x": 18,
+          "y": -46,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "sensor-right",
+          "type": "sensor",
+          "label": "Right sensor",
+          "x": 55,
+          "y": 5,
+          "z": 5,
+          "rotation": 0,
+          "surface": "belt",
+          "angle": 65
+        },
+        {
+          "id": "motor-right",
+          "type": "motor",
+          "label": "Right motor",
+          "x": 55,
+          "y": -14,
+          "z": 5,
+          "rotation": 0,
+          "surface": "belt",
+          "angle": 80
+        },
+        {
+          "id": "q-right",
+          "type": "mosfet",
+          "label": "Right MOSFET",
+          "x": 55,
+          "y": -20,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r1k-right",
+          "type": "r1k",
+          "label": "Right 1k\u03a9",
+          "x": 43,
+          "y": 0,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r2k-right",
+          "type": "r2k",
+          "label": "Right 2k\u03a9",
+          "x": 67,
+          "y": 0,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r220-right",
+          "type": "r220",
+          "label": "Right 220\u03a9",
+          "x": 42,
+          "y": -31,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "r10k-right",
+          "type": "r10k",
+          "label": "Right 10k\u03a9",
+          "x": 68,
+          "y": -31,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        },
+        {
+          "id": "diode-right",
+          "type": "diode",
+          "label": "Right 1N4007",
+          "x": 73,
+          "y": -46,
+          "z": 4,
+          "rotation": 0,
+          "surface": "board",
+          "angle": 0
+        }
+      ],
+      "wires": [
+        {
+          "id": "w1",
+          "from": {
+            "component": "esp",
+            "pin": "VIN"
+          },
+          "to": {
+            "component": "sensor-left",
+            "pin": "VCC"
+          },
+          "color": "#d45446",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w2",
+          "from": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "to": {
+            "component": "sensor-left",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w3",
+          "from": {
+            "component": "esp",
+            "pin": "D25"
+          },
+          "to": {
+            "component": "sensor-left",
+            "pin": "Trig"
+          },
+          "color": "#d1a52c",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w4",
+          "from": {
+            "component": "sensor-left",
+            "pin": "Echo"
+          },
+          "to": {
+            "component": "r1k-left",
+            "pin": "A"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w5",
+          "from": {
+            "component": "r1k-left",
+            "pin": "B"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "D34"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w6",
+          "from": {
+            "component": "r1k-left",
+            "pin": "B"
+          },
+          "to": {
+            "component": "r2k-left",
+            "pin": "A"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w7",
+          "from": {
+            "component": "r2k-left",
+            "pin": "B"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w8",
+          "from": {
+            "component": "esp",
+            "pin": "D13"
+          },
+          "to": {
+            "component": "r220-left",
+            "pin": "A"
+          },
+          "color": "#4a9d78",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w9",
+          "from": {
+            "component": "r220-left",
+            "pin": "B"
+          },
+          "to": {
+            "component": "q-left",
+            "pin": "G"
+          },
+          "color": "#4a9d78",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w10",
+          "from": {
+            "component": "q-left",
+            "pin": "G"
+          },
+          "to": {
+            "component": "r10k-left",
+            "pin": "A"
+          },
+          "color": "#4a9d78",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w11",
+          "from": {
+            "component": "r10k-left",
+            "pin": "B"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w12",
+          "from": {
+            "component": "q-left",
+            "pin": "S"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w13",
+          "from": {
+            "component": "q-left",
+            "pin": "D"
+          },
+          "to": {
+            "component": "motor-left",
+            "pin": "-"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w14",
+          "from": {
+            "component": "esp",
+            "pin": "3V3"
+          },
+          "to": {
+            "component": "motor-left",
+            "pin": "+"
+          },
+          "color": "#d45446",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w15",
+          "from": {
+            "component": "motor-left",
+            "pin": "+"
+          },
+          "to": {
+            "component": "diode-left",
+            "pin": "K"
+          },
+          "color": "#d45446",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w16",
+          "from": {
+            "component": "motor-left",
+            "pin": "-"
+          },
+          "to": {
+            "component": "diode-left",
+            "pin": "A"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w17",
+          "from": {
+            "component": "esp",
+            "pin": "VIN"
+          },
+          "to": {
+            "component": "sensor-center",
+            "pin": "VCC"
+          },
+          "color": "#d45446",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w18",
+          "from": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "to": {
+            "component": "sensor-center",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w19",
+          "from": {
+            "component": "esp",
+            "pin": "D26"
+          },
+          "to": {
+            "component": "sensor-center",
+            "pin": "Trig"
+          },
+          "color": "#d1a52c",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w20",
+          "from": {
+            "component": "sensor-center",
+            "pin": "Echo"
+          },
+          "to": {
+            "component": "r1k-center",
+            "pin": "A"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w21",
+          "from": {
+            "component": "r1k-center",
+            "pin": "B"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "D35"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w22",
+          "from": {
+            "component": "r1k-center",
+            "pin": "B"
+          },
+          "to": {
+            "component": "r2k-center",
+            "pin": "A"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w23",
+          "from": {
+            "component": "r2k-center",
+            "pin": "B"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w24",
+          "from": {
+            "component": "esp",
+            "pin": "D33"
+          },
+          "to": {
+            "component": "r220-center",
+            "pin": "A"
+          },
+          "color": "#4a9d78",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w25",
+          "from": {
+            "component": "r220-center",
+            "pin": "B"
+          },
+          "to": {
+            "component": "q-center",
+            "pin": "G"
+          },
+          "color": "#4a9d78",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w26",
+          "from": {
+            "component": "q-center",
+            "pin": "G"
+          },
+          "to": {
+            "component": "r10k-center",
+            "pin": "A"
+          },
+          "color": "#4a9d78",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w27",
+          "from": {
+            "component": "r10k-center",
+            "pin": "B"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w28",
+          "from": {
+            "component": "q-center",
+            "pin": "S"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w29",
+          "from": {
+            "component": "q-center",
+            "pin": "D"
+          },
+          "to": {
+            "component": "motor-center",
+            "pin": "-"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w30",
+          "from": {
+            "component": "esp",
+            "pin": "3V3"
+          },
+          "to": {
+            "component": "motor-center",
+            "pin": "+"
+          },
+          "color": "#d45446",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w31",
+          "from": {
+            "component": "motor-center",
+            "pin": "+"
+          },
+          "to": {
+            "component": "diode-center",
+            "pin": "K"
+          },
+          "color": "#d45446",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w32",
+          "from": {
+            "component": "motor-center",
+            "pin": "-"
+          },
+          "to": {
+            "component": "diode-center",
+            "pin": "A"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w33",
+          "from": {
+            "component": "esp",
+            "pin": "VIN"
+          },
+          "to": {
+            "component": "sensor-right",
+            "pin": "VCC"
+          },
+          "color": "#d45446",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w34",
+          "from": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "to": {
+            "component": "sensor-right",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w35",
+          "from": {
+            "component": "esp",
+            "pin": "D27"
+          },
+          "to": {
+            "component": "sensor-right",
+            "pin": "Trig"
+          },
+          "color": "#d1a52c",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w36",
+          "from": {
+            "component": "sensor-right",
+            "pin": "Echo"
+          },
+          "to": {
+            "component": "r1k-right",
+            "pin": "A"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w37",
+          "from": {
+            "component": "r1k-right",
+            "pin": "B"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "D32"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w38",
+          "from": {
+            "component": "r1k-right",
+            "pin": "B"
+          },
+          "to": {
+            "component": "r2k-right",
+            "pin": "A"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w39",
+          "from": {
+            "component": "r2k-right",
+            "pin": "B"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w40",
+          "from": {
+            "component": "esp",
+            "pin": "D4"
+          },
+          "to": {
+            "component": "r220-right",
+            "pin": "A"
+          },
+          "color": "#4a9d78",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w41",
+          "from": {
+            "component": "r220-right",
+            "pin": "B"
+          },
+          "to": {
+            "component": "q-right",
+            "pin": "G"
+          },
+          "color": "#4a9d78",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w42",
+          "from": {
+            "component": "q-right",
+            "pin": "G"
+          },
+          "to": {
+            "component": "r10k-right",
+            "pin": "A"
+          },
+          "color": "#4a9d78",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w43",
+          "from": {
+            "component": "r10k-right",
+            "pin": "B"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w44",
+          "from": {
+            "component": "q-right",
+            "pin": "S"
+          },
+          "to": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w45",
+          "from": {
+            "component": "q-right",
+            "pin": "D"
+          },
+          "to": {
+            "component": "motor-right",
+            "pin": "-"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w46",
+          "from": {
+            "component": "esp",
+            "pin": "3V3"
+          },
+          "to": {
+            "component": "motor-right",
+            "pin": "+"
+          },
+          "color": "#d45446",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w47",
+          "from": {
+            "component": "motor-right",
+            "pin": "+"
+          },
+          "to": {
+            "component": "diode-right",
+            "pin": "K"
+          },
+          "color": "#d45446",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w48",
+          "from": {
+            "component": "motor-right",
+            "pin": "-"
+          },
+          "to": {
+            "component": "diode-right",
+            "pin": "A"
+          },
+          "color": "#438bd1",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w49",
+          "from": {
+            "component": "esp",
+            "pin": "3V3"
+          },
+          "to": {
+            "component": "imu",
+            "pin": "VCC"
+          },
+          "color": "#d45446",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w50",
+          "from": {
+            "component": "esp",
+            "pin": "GND"
+          },
+          "to": {
+            "component": "imu",
+            "pin": "GND"
+          },
+          "color": "#394a55",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w51",
+          "from": {
+            "component": "esp",
+            "pin": "D21"
+          },
+          "to": {
+            "component": "imu",
+            "pin": "SDA"
+          },
+          "color": "#4a9d78",
+          "slack": 7,
+          "via": null
+        },
+        {
+          "id": "w52",
+          "from": {
+            "component": "esp",
+            "pin": "D22"
+          },
+          "to": {
+            "component": "imu",
+            "pin": "SCL"
+          },
+          "color": "#d1a52c",
+          "slack": 7,
+          "via": null
+        }
+      ]
+    }
+  }
+}

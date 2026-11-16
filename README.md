@@ -139,3 +139,45 @@ mkdir -p 3d-model/hdri && curl -L -o 3d-model/hdri/artist_workshop_4k.hdr https:
 ```
 
 To make it follow the real sensors: start the live-view server (above), open the file, go to the **Scripting** tab and click **Run Script** on `live_link.py`. Click it again to stop.
+
+## Vero board and belt design studios
+
+The live page now links to two separate, editable assemblies:
+
+- **http://localhost:8000/vero** — a 180 × 120 mm vero board with real 2.54 mm holes and copper strips underneath.
+- **http://localhost:8000/belt** — an elliptical webbing belt, with the controller board at the back and sensors/motors around its outside.
+
+Both start with 26 independently movable components and 52 named pin connections matching the wiring above, including the Echo dividers, gate resistors, pull-downs and flyback diodes. The models are made in Blender and loaded from local assets; Blender does not have to stay open. To use the editors without opening a USB connection:
+
+```sh
+~/.platformio/penv/bin/python tools/live-view/server.py --no-serial
+```
+
+**Move** lets you drag a component; **Orbit** rotates the view (dragging empty space also orbits). Scroll to zoom. Select a component in the model or the component list to enter exact coordinates, lift and rotation. **Mount on** transfers it between the board, belt surface and free space. Belt components use angle around the waist and height along the strap; their outward orientation follows the surface. Disable **2.54 mm snap** for free movement. The belt radii and strap width are editable under **Belt dimensions**.
+
+**Wire** connects two clicked gold pin markers. Pin buttons in the inspector or the **Connect two pins** form provide the same action without having to hit a tiny pin. Select a wire in the scene or **All connections** to inspect its endpoints, colour and measured curve length, adjust its extra lift, or remove it. Drag the orange handle to reshape a selected wire; **Custom bend** also accepts exact XYZ coordinates. **Automatic route** restores automatic routing. Wires remain attached to their pins and grow/shrink as components move, with no preset cable length. Automatic belt routes go around the outside. Manually routed bends can pass anywhere.
+
+Each page saves independently in this browser. **Undo/Redo** covers moves, dimensions, added/removed components, connections, imports and resets. **Export JSON** makes a portable backup; **Import JSON** restores it on the matching page. Removing a component removes its connected wires and can be undone. The editor supports up to 150 components and 500 wires per layout. The layouts are placement and connection visualizations: copper strip continuity/cuts, collisions and electrical operation are not simulated, so these are not fabrication-ready stripboard layouts.
+
+### Editable Blender sources
+
+Open `3d-model/vero_layout.blend` or `3d-model/belt_layout.blend`. The active assembly scene contains separate hardware objects and editable wire curves. Rebuild the default files and browser component library with:
+
+```sh
+/Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup -P 3d-model/build_customizer.py
+```
+
+To bring a layout exported from the browser into Blender:
+
+```sh
+/Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup -P 3d-model/build_customizer.py -- /absolute/path/belt-layout.json
+```
+
+This writes `3d-model/customized_layout.blend` (an optional second path chooses a different output). The Blender file is a snapshot of your web layout: move parts in the browser to automatically reroute wires, then export again. Coordinates are millimetres, Z up. The original live breadboard model and firmware are independent of these saved designs.
+
+Validation:
+
+```sh
+node --test tools/live-view/tests/*.test.mjs
+~/.platformio/penv/bin/python tools/live-view/tests/test_server.py
+```

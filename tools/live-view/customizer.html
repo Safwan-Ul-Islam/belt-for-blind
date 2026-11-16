@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Belt for Blind · Design studio</title>
+<link rel="stylesheet" href="/3d.css"><link rel="stylesheet" href="/customizer.css">
+<script type="importmap">{"imports":{"three":"/vendor/three/three.module.min.js","three/addons/":"/vendor/three/addons/"}}</script>
+</head>
+<body>
+<header>
+<a class="brand" href="/"><span class="brand-mark">b.</span><span>Belt for Blind<small>BUILD IT YOUR WAY</small></span></a>
+<nav aria-label="View"><a href="/">Live 3D</a><a id="nav-vero" href="/vero">Vero board</a><a id="nav-belt" href="/belt">Belt studio</a><a href="/#wiring">Wiring guide</a></nav>
+<span id="save-state" class="connection" role="status">Local design</span>
+</header>
+<main>
+<div class="studio-intro"><div><p class="eyebrow">YOUR HARDWARE. YOUR LAYOUT.</p><h1 id="page-title">Design studio</h1><p id="subtitle">কম্পোনেন্ট টেনে সাজান। সংযুক্ত তার নিজেই লম্বা হবে।</p></div><div class="file-actions"><button id="undo" disabled>↶ Undo</button><button id="redo" disabled>↷ Redo</button><button id="export">Export JSON</button><label class="file-button">Import JSON<input id="import" type="file" accept=".json,application/json"></label></div></div>
+<div class="studio-grid">
+<aside class="parts-panel panel">
+<div class="panel-heading"><span class="eyebrow">COMPONENTS</span><span id="part-count"></span></div>
+<p class="hint">তালিকা বা 3D মডেলে ক্লিক করে বেছে নিন।</p>
+<div id="component-list" class="component-list"></div>
+<details><summary>Add component</summary><label>Component type<select id="add-type"></select></label><button id="add-component">+ Add to layout</button></details>
+<details id="belt-settings" hidden><summary>Belt dimensions</summary><label>Side radius · mm<input id="belt-rx" type="number" min="40" max="1000"></label><label>Front radius · mm<input id="belt-ry" type="number" min="40" max="1000"></label><label>Width · mm<input id="belt-width" type="number" min="20" max="200"></label><button id="apply-belt">Apply dimensions</button></details>
+<details><summary>How to use · ব্যবহার</summary><p>Move: কম্পোনেন্ট ধরে টানুন। বেল্টে থাকলে চারপাশে ঘুরবে।</p><p>Orbit: ফাঁকা জায়গায় টেনে ঘোরান; scroll দিয়ে zoom।</p><p>Wire: একটি পিন, তারপর আরেকটি পিনে ক্লিক করুন। অথবা পাশের connection form ব্যবহার করুন।</p><p>তার বেছে নিলে কমলা handle টেনে বাঁক বদলাতে পারবেন। Esc চাপলে নির্বাচন বাতিল।</p><p>Position ও rotation ঘরে সংখ্যাও লিখতে পারবেন। Delete দিয়ে নির্বাচিত কম্পোনেন্ট বা তার মুছুন।</p></details>
+<button id="reset-layout" class="quiet">Reset this layout</button>
+</aside>
+<section class="design-stage" aria-label="Interactive assembly editor">
+<div class="stage-toolbar" role="group" aria-label="Editor mode"><button data-mode="move" aria-pressed="true">↔ Move</button><button data-mode="orbit" aria-pressed="false">◉ Orbit</button><button data-mode="wire" aria-pressed="false">⌁ Wire</button><span class="toolbar-divider"></span><button id="fit">Fit view</button><button id="top">Top</button></div>
+<div id="editor-viewport" tabindex="0" aria-label="3D editor. Select and drag components to move them; use the inspector for precise positioning."></div>
+<div class="stage-options"><label><input id="snap" type="checkbox" checked> 2.54 mm snap</label><label><input id="show-wires" type="checkbox" checked> Wires</label><label><input id="show-labels" type="checkbox" checked> Labels</label></div>
+<div id="labels" aria-hidden="true"></div><div id="pin-tooltip" hidden></div>
+<div id="editor-loading" class="loading glass" role="status">Loading Blender components…</div>
+<div class="stage-footer"><span id="stage-info">BLENDER COMPONENTS · MILLIMETRES</span><span id="wire-total"></span></div>
+</section>
+<aside class="inspector panel"><div class="panel-heading"><span class="eyebrow">INSPECTOR</span><span id="selection-kind">LAYOUT</span></div>
+<div id="empty-selection"><h2>Make it fit.</h2><p>একটি কম্পোনেন্ট বেছে নিন। অবস্থান ও সংযোগ এখানে দেখা যাবে।</p><div class="legend"><span style="--dot:#d45446">Power</span><span style="--dot:#394a55">Ground</span><span style="--dot:#438bd1">Signal</span></div><p class="hint">এই এডিটর অবস্থান ও তারের সংযোগ দেখায়। ভেরো বোর্ডের copper strip কাটার নকশা বা electrical simulation এতে নেই।</p></div>
+<div id="component-inspector" hidden><h2 id="selected-name"></h2><label>Mount on<select id="surface"><option value="board">Vero board</option><option value="belt">Belt surface</option><option value="free">Free space</option></select></label><div class="fields"><label id="x-label">X · mm<input id="pos-x" type="number" step="0.1"></label><label id="y-label">Y · mm<input id="pos-y" type="number" step="0.1"></label><label>Lift / Z · mm<input id="pos-z" type="number" step="0.1"></label><label>Rotation · °<input id="rotation" type="number" step="1"></label></div><button id="apply-position">Apply position</button><p class="hint">পিনের সঙ্গে যুক্ত তার স্থান বদলালেও সংযুক্ত থাকবে।</p><div id="pin-list"></div><button id="remove-component" class="danger">Remove component</button></div>
+<div id="wire-inspector" hidden><h2>Wire connection</h2><p id="wire-endpoints"></p><strong id="wire-length"></strong><label>Wire colour<input id="wire-color" type="color" value="#438bd1"></label><label>Extra lift · mm<input id="wire-slack" type="number" min="0" step="1"></label><button id="apply-wire">Apply wire style</button><p class="hint">দৈর্ঘ্য নির্দিষ্ট নয়—কম্পোনেন্ট যত দূরে যাবে, তার তত লম্বা হবে।</p><details><summary>Custom bend · mm</summary><div class="fields"><label>X<input id="bend-x" type="number" step="1"></label><label>Y<input id="bend-y" type="number" step="1"></label><label>Z<input id="bend-z" type="number" step="1"></label></div><button id="apply-bend">Set bend</button><button id="auto-route">Automatic route</button></details><button id="remove-wire" class="danger">Remove wire</button></div>
+<details class="connection-form" open><summary>Connect two pins</summary><label>From component<select id="from-component"></select></label><label>From pin<select id="from-pin"></select></label><label>To component<select id="to-component"></select></label><label>To pin<select id="to-pin"></select></label><button id="connect" class="primary">+ Connect wire</button><p id="wire-prompt" class="hint">Wire mode-এ দুই পিনে ক্লিক করেও সংযোগ করতে পারবেন।</p></details>
+</aside>
+</div>
+<div class="studio-status"><p id="message" role="status">কম্পোনেন্ট সরান, তারের সংযোগ বুঝুন, নিজের লেআউট বানান।</p><span>Autosaved in this browser · Independent board & belt layouts</span></div>
+<details class="connection-table"><summary>All connections <span id="connection-count"></span></summary><div id="connections"></div></details>
+</main>
+<script type="module">import('/customizer.js').catch(error=>{document.querySelector('#editor-loading').textContent='Could not load the editor: '+error.message;});</script>
+</body></html>
